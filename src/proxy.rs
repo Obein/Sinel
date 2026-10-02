@@ -51,7 +51,7 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
 
     // Read the complete TLS record containing ClientHello
     let sni = loop {
-        let read_future = client.read(&mut chunk);
+        let read_future = client.read(chunk.as_mut_slice());
         let n = match tokio::time::timeout(HANDSHAKE_TIMEOUT, read_future).await {
             Ok(Ok(0)) => {
                 // Connection closed by client / health probe before sending data
@@ -65,7 +65,7 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
             }
         };
 
-        buffer.extend_from_slice(&chunk[..n]);
+        buffer.extend_from_slice(&chunk.as_slice()[..n]);
 
         // Protocol Sniffing:
         // Signal TLS ClientHello always starts with ContentType 0x16 (Handshake).

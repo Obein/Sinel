@@ -87,13 +87,12 @@ pub fn is_allowed_domain(sni: &str) -> bool {
     }
 
     // 2. Wildcard match for *.signal.org or *.voip.signal.org if enabled
-    if is_subdomain_wildcard_enabled() {
-        if (lower.ends_with(".signal.org") || lower.ends_with(".voip.signal.org"))
-            && !lower.starts_with('.')
-            && !lower.contains("..")
-        {
-            return true;
-        }
+    if is_subdomain_wildcard_enabled()
+        && (lower.ends_with(".signal.org") || lower.ends_with(".voip.signal.org"))
+        && !lower.starts_with('.')
+        && !lower.contains("..")
+    {
+        return true;
     }
 
     false

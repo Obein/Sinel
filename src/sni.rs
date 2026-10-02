@@ -60,7 +60,7 @@ pub fn get_record_expected_length(buf: &[u8]) -> Result<usize, SniError> {
     let total_len = 5 + payload_len;
 
     // Sanity check: TLS record payload maximum size is 16384 bytes (2^14) + padding
-    if payload_len > 18432 || payload_len < 4 {
+    if !(4..=18432).contains(&payload_len) {
         return Err(SniError::MalformedPacket("TLS record length out of standard bounds"));
     }
 
