@@ -5,8 +5,8 @@
 # - 1 x shared-cpu-1x (256MB RAM) running 24/7: ~$1.94 / month
 # - Fly.io waives all invoices under $5.00 USD, resulting in $0.00 / month bill.
 
+# Note: If deploying from Fly Web Dashboard, this app name should match your Dashboard App Name
 app = "signal-tls-proxy-fly"
-primary_region = "iad"
 
 [build]
   dockerfile = "Dockerfile"
@@ -35,7 +35,7 @@ primary_region = "iad"
   [[services.tcp_checks]]
     interval = "30s"
     timeout = "5s"
-    grace_period = "10s"
+    grace_period = "30s"
 
 # Resource sizing guaranteed to stay within the $5 invoice waiver threshold
 [[vm]]
