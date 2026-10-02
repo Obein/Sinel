@@ -2,6 +2,7 @@
 
 mod proxy;
 mod sni;
+mod web;
 mod whitelist;
 
 use log::info;

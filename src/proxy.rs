@@ -67,6 +67,13 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
 
         buffer.extend_from_slice(&chunk[..n]);
 
+        // Protocol Sniffing:
+        // Signal TLS ClientHello always starts with ContentType 0x16 (Handshake).
+        // If the first byte is NOT 0x16, this is a plain HTTP request from a web browser!
+        if !buffer.is_empty() && buffer[0] != 0x16 {
+            return handle_http(&mut client, &buffer, peer_addr).await;
+        }
+
         if buffer.len() >= 5 {
             match get_record_expected_length(&buffer) {
                 Ok(expected_len) => {
@@ -149,5 +156,20 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
         }
     }
 
+    Ok(())
+}
+
+/// Handles standard HTTP requests from web browsers by responding with the Web UI.
+async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAddr) -> std::io::Result<()> {
+    let host = crate::web::parse_http_host(buffer).unwrap_or_else(|| {
+        std::env::var("FLY_APP_NAME")
+            .map(|n| format!("{}.fly.dev", n))
+            .unwrap_or_else(|_| "sinel.fly.dev".to_string())
+    });
+
+    debug!("[{}] Serving Web UI dashboard for host: {}", peer_addr, host);
+    let resp = crate::web::build_http_response(&host);
+    client.write_all(&resp).await?;
+    client.flush().await?;
     Ok(())
 }
