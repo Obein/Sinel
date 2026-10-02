@@ -6,7 +6,7 @@
 # - Fly.io waives all invoices under $5.00 USD, resulting in $0.00 / month bill.
 
 # Note: If deploying from Fly Web Dashboard, this app name should match your Dashboard App Name
-app = "signal-tls-proxy-fly"
+app = "sinel"
 
 [build]
   dockerfile = "Dockerfile"
