@@ -157,7 +157,7 @@ Customizable via the `[env]` block in `fly.toml` or the **Secrets** tab in the F
 | :--- | :--- | :--- |
 | `PORT` | `8080` | Internal listening port inside the container |
 | `HOST` | `0.0.0.0` | Internal listening IP address |
-| `RUST_LOG` | `signal_tls_proxy_fly=info,warn` | Log level (`debug` enables detailed handshake logs) |
+| `RUST_LOG` | `sinel=info,warn` | Log level (`debug` enables detailed handshake logs) |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | Allows all `*.signal.org` and `*.voip.signal.org` subdomains |
 | `EXTRA_ALLOWED_DOMAINS` | *(empty)* | Comma-separated list of additional allowed destination domains |
 

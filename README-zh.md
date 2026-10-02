@@ -155,7 +155,7 @@ fly certs add signal.yourdomain.com
 | :--- | :--- | :--- |
 | `PORT` | `8080` | 容器内部监听端口 |
 | `HOST` | `0.0.0.0` | 容器内部监听 IP |
-| `RUST_LOG` | `signal_tls_proxy_fly=info,warn` | 日志详细级别（可调为 `debug` 查看实时转发日志） |
+| `RUST_LOG` | `sinel=info,warn` | 日志详细级别（可调为 `debug` 查看实时转发日志） |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | 是否允许所有 `*.signal.org` 和 `*.voip.signal.org` 子域，防止官方新增 CDN 节点时断联 |
 | `EXTRA_ALLOWED_DOMAINS` | 空 | 额外允许的目标域名（英文逗号分隔） |
 

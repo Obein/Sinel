@@ -300,8 +300,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-tls-proxy-fly"
-version = "0.1.0"
+name = "sinel"
+version = "1.0.0"
 dependencies = [
  "env_logger",
  "log",

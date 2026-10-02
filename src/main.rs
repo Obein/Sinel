@@ -9,11 +9,10 @@ use log::info;
 use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize env_logger (default to info if RUST_LOG is unset)
-    if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "signal_tls_proxy_fly=info,warn");
-    }
-    env_logger::init();
+    // Initialize env_logger (default to sinel=info,warn if RUST_LOG is unset)
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or("sinel=info,warn")
+    ).init();
 
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

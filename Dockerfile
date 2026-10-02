@@ -26,7 +26,7 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
-COPY --from=builder /usr/src/app/target/release/signal-tls-proxy-fly /app/signal-tls-proxy-fly
+COPY --from=builder /usr/src/app/target/release/sinel /app/sinel
 
 # Security: Run as dedicated non-root user
 RUN adduser -D -u 10001 -g 10001 proxyuser
@@ -38,4 +38,4 @@ ENV RUST_LOG=info
 
 EXPOSE 8080
 
-ENTRYPOINT ["/app/signal-tls-proxy-fly"]
+ENTRYPOINT ["/app/sinel"]
