@@ -78,24 +78,34 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 
 ---
 
-### 步骤 3：在 Fly.io 网页端绑定域名与 IP（仅需首次配置一次）
-部署成功后，为代理绑定你的专属自定义域名：
+### 步骤 3：在 Fly.io 网页端分配公网 IP 地址（关键！必须操作）
+新创建的 Fly 应用默认没有分配公网 IP 地址（因此 `fly.dev` 域名在分配 IP 前是无法从互联网解析访问的）：
 
-1. **分配独立 IP 地址**：
-   * 在 [Fly.io Dashboard](https://fly.io/dashboard) 点击进入刚创建的应用；
-   * 左侧菜单点击 **IP Addresses**；
-   * 点击 **Allocate IPv4** 分配专用 Anycast IPv4，再点击 **Allocate IPv6** 分配 IPv6 地址；
-   * 复制生成的 IPv4 和 IPv6 地址。
-2. **添加自定义域名与证书**：
-   * 左侧菜单点击 **Certificates**；
-   * 点击右上角 **Add a Certificate**；
-   * 输入你的二级域名（例如 `signal.yourdomain.com`），点击 **Create Certificate**。
-3. **设置域名 DNS 解析**：
+1. 在 [Fly.io Dashboard](https://fly.io/dashboard) 点击进入刚创建的应用 **Overview（概览）** 页面；
+2. 向下滚动到 **Networking** 区域，在 **IP addresses** 下方会看到 `This app has no IP addresses`；
+3. **点击分配免费 IP（请仔细对照选择）**：
+   * **点击 `Assign Shared IPv4`**：**【必点！完全免费 $0.00】** Fly.io 官方提供的 Anycast 共享 IPv4，它是基于 TLS 握手中的 SNI（域名）来识别并路由流量的，与本项目的 TLS-in-TLS 架构完美契合！
+   * **点击 `Assign Dedicated IPv6`**：**【建议点击！完全免费 $0.00】** 免费获得一个独立的专用 IPv6 地址。
+   * ⚠️ **切勿点击 `Assign Dedicated IPv4`**：这是独立独享 IPv4，每月需收取 $2.00 费用，本项目完全不需要。
+   * **忽略 `Assign Flycast IPv6`**：这是 Fly 平台内部私有网络专用的，外部公网无法访问。
+4. 分配完成后，下方会立即列出生成的公共 IP 地址，此时你的应用正式获得公网入口！
+
+---
+
+### 步骤 4：在 Fly.io 网页端绑定自定义域名与证书（抗封锁核心）
+直接使用 `fly.dev` 公共域名在大多数地区会被防火墙列入黑名单，**必须绑定你自己的独立域名**才能起到真正的伪装效果：
+
+1. **添加域名**：
+   * 在应用左侧菜单栏点击 **Certificates**；
+   * 点击右上角紫色按钮 **Add a Certificate**；
+   * 输入你的二级域名（例如 `signal.yourdomain.com`），点击 **Create Certificate**；
+   * 页面会给出详细的 DNS 配置指令（包含需要指向的 IP 地址或 CNAME 值）。
+2. **设置域名 DNS 解析**：
    * 前往你的域名 DNS 服务商（如 Cloudflare / DNSPod / 阿里云 / NameSilo 等）；
    * 添加两条解析记录：
-     * **A 记录**：主机记录填 `signal` -> 记录值填分配的 **IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
-     * **AAAA 记录**：主机记录填 `signal` -> 记录值填分配的 **IPv6**。
-4. **验证证书就绪**：
+     * **A 记录**：主机记录填 `signal` -> 记录值填刚才分配的 **Shared IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
+     * **AAAA 记录**：主机记录填 `signal` -> 记录值填刚才分配的 **Dedicated IPv6**。
+3. **验证证书就绪**：
    * DNS 生效后，Fly.io 网页端 Certificates 页面的域名状态会在 1~2 分钟内变为绿色勾选的 `Ready`，说明外层 TLS 证书已自动就绪！
 
 ---
@@ -125,8 +135,8 @@ fly auth login
 fly launch --no-deploy
 fly deploy
 
-# 3. 分配 IP 并配置证书
-fly ips allocate-v4
+# 3. 分配免费 IP 并配置证书
+fly ips allocate-v4 --shared
 fly ips allocate-v6
 fly certs add signal.yourdomain.com
 ```
