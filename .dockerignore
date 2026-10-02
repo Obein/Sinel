@@ -1,0 +1,9 @@
+target/
+.git/
+.gitignore
+.dockerignore
+*.md
+Signal-TLS-Proxy/
+.github/
+.vscode/
+.idea/

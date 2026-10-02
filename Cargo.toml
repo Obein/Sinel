@@ -1,0 +1,19 @@
+[package]
+name = "signal-tls-proxy-fly"
+version = "0.1.0"
+edition = "2021"
+authors = ["Signal Proxy Operator"]
+description = "A lightweight, memory-efficient Signal TLS-in-TLS relay proxy optimized for Fly.io free tier"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+tokio = { version = "1.40", features = ["rt-multi-thread", "net", "io-util", "time"] }
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

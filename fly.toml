@@ -1,0 +1,44 @@
+# Fly.io configuration file for Signal TLS Proxy (Rust implementation)
+#
+# Designed to operate 100% within Fly.io's Free Allowance / $5 Waiver Tier.
+# Cost breakdown:
+# - 1 x shared-cpu-1x (256MB RAM) running 24/7: ~$1.94 / month
+# - Fly.io waives all invoices under $5.00 USD, resulting in $0.00 / month bill.
+
+app = "signal-tls-proxy-fly"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  HOST = "0.0.0.0"
+  RUST_LOG = "signal_tls_proxy_fly=info,warn"
+  ALLOW_ALL_SIGNAL_SUBDOMAINS = "true"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  # Keep proxy alive 24/7 for push notifications and instant messaging (no cold start)
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  # Port 443: Fly terminates outer TLS using automated Let's Encrypt certificates.
+  # The decrypted inner stream (containing the inner TLS ClientHello) is passed to port 8080.
+  # Crucial: handlers ONLY contains "tls", NOT "http".
+  [[services.ports]]
+    port = 443
+    handlers = ["tls"]
+
+  [[services.tcp_checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+# Resource sizing guaranteed to stay within the $5 invoice waiver threshold
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1
