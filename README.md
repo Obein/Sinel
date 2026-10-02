@@ -1,6 +1,6 @@
 # Sinel: Signal TLS Proxy for Fly.io (Rust Edition)
 
-[English](README.md) | [中文说明](README-zh.md)
+English | [中文](README-zh.md)
 
 > An ultra-lightweight **Signal TLS-in-TLS Obfuscation Reverse Proxy** tailored specifically for **Fly.io's Free Allowance ($5 monthly invoice waiver policy)**. Written in pure asynchronous Rust with a minimal memory footprint (< 15 MB), completely eliminating the operational burden of managing Nginx containers and Let's Encrypt certificate renewals.
 

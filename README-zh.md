@@ -1,6 +1,6 @@
 # Sinel: Signal TLS Proxy for Fly.io (Rust Edition)
 
-[English](README.md) | [中文说明](README-zh.md)
+[English](README.md) | 中文
 
 > 一个专为 **Fly.io 免费层级（Free Allowance / $5 豁免政策）** 量身打造的超轻量级 **Signal TLS-in-TLS 混淆反向代理**。使用 Rust 构建，内存占用 < 15MB，免除维护 Nginx 多容器、Let's Encrypt 证书签发与续签的繁琐负担。
 
