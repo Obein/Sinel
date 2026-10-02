@@ -13,6 +13,7 @@ RUN apk add --no-cache musl-dev
 # Copy all source files and compile directly (guarantees real code is compiled)
 COPY Cargo.toml Cargo.lock* ./
 COPY src ./src
+COPY web ./web
 
 RUN cargo build --release
 
