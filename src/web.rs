@@ -22,7 +22,7 @@ pub fn parse_http_host(buf: &[u8]) -> Option<String> {
         if trimmed.to_lowercase().starts_with("host:") {
             let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
             if parts.len() == 2 {
-                // Strip optional port (e.g. "sinel.fly.dev:443" -> "sinel.fly.dev")
+                // Strip optional port (e.g. "signal.example.com:443" -> "signal.example.com")
                 let host_part = parts[1].trim();
                 let clean_host = host_part.split(':').next().unwrap_or(host_part).trim();
                 if !clean_host.is_empty() {
@@ -57,8 +57,8 @@ mod tests {
 
     #[test]
     fn test_parse_host_simple() {
-        let req = b"GET / HTTP/1.1\r\nHost: sinel.fly.dev\r\nUser-Agent: curl\r\n\r\n";
-        assert_eq!(parse_http_host(req), Some("sinel.fly.dev".to_string()));
+        let req = b"GET / HTTP/1.1\r\nHost: signal.example.com\r\nUser-Agent: curl\r\n\r\n";
+        assert_eq!(parse_http_host(req), Some("signal.example.com".to_string()));
     }
 
     #[test]
@@ -69,8 +69,8 @@ mod tests {
 
     #[test]
     fn test_render_html_contains_host() {
-        let html = render_html_page("sinel.fly.dev");
-        assert!(html.contains("https://signal.tube/#sinel.fly.dev"));
-        assert!(html.contains("sinel.fly.dev:443"));
+        let html = render_html_page("signal.example.com");
+        assert!(html.contains("https://signal.tube/#signal.example.com"));
+        assert!(html.contains("signal.example.com:443"));
     }
 }

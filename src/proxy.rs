@@ -164,7 +164,7 @@ async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAdd
     let host = crate::web::parse_http_host(buffer).unwrap_or_else(|| {
         std::env::var("FLY_APP_NAME")
             .map(|n| format!("{}.fly.dev", n))
-            .unwrap_or_else(|_| "sinel.fly.dev".to_string())
+            .unwrap_or_else(|_| "localhost".to_string())
     });
 
     debug!("[{}] Serving Web UI dashboard for host: {}", peer_addr, host);
