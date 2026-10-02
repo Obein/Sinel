@@ -2,9 +2,9 @@
 name = "signal-tls-proxy-fly"
 version = "0.1.0"
 edition = "2021"
-authors = ["Signal Proxy Operator"]
+authors = ["Hugo Koo <hokdung@outlook.com>"]
 description = "A lightweight, memory-efficient Signal TLS-in-TLS relay proxy optimized for Fly.io free tier"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 
 [dependencies]
 tokio = { version = "1.40", features = ["rt-multi-thread", "net", "io-util", "time"] }

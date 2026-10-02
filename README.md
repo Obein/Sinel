@@ -175,6 +175,12 @@ cargo run
 
 ---
 
+## Adapted from
+
+* [Signal-TLS-Proxy](https://github.com/signalapp/Signal-TLS-Proxy)
+
+---
+
 ## License
 
 This project is open-source under the [MIT License](LICENSE).
