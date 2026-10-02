@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Signal TLS Proxy - {{HOST}}</title>
+  <title>Sinel: A Signal TLS Proxy - {{HOST}}</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
   <style>
     :root {
-      --bg: #0b1120;
-      --card-bg: #151f32;
-      --card-border: #1e293b;
-      --primary: #2c6bed;
-      --primary-hover: #1d4ed8;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
-      --success-bg: rgba(16, 185, 129, 0.1);
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #262626;
+      --border-hover: #404040;
+      --text: #f5f5f5;
+      --text-muted: #888888;
+      --accent: #2c6bed;
+      --accent-hover: #1d4ed8;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     * {
       box-sizing: border-box;
@@ -23,207 +24,284 @@
       padding: 0;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--font-sans);
       background-color: var(--bg);
-      color: var(--text-main);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
+      justify-content: space-between;
+      padding: 32px 24px;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
+    header {
       width: 100%;
-      max-width: 540px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 36px 28px;
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-    }
-    .header {
+      max-width: 580px;
+      margin: 0 auto;
       display: flex;
+      justify-content: flex-end;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
     }
-    .badge {
+    .lang-switch {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      background: var(--success-bg);
-      color: var(--success);
       font-size: 13px;
       font-weight: 500;
-      margin-bottom: 20px;
+      letter-spacing: 0.05em;
     }
-    .badge-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 10px var(--success);
-      animation: pulse 2s infinite;
+    .lang-switch button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 2px 4px;
+      transition: color 0.15s ease;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .lang-switch button:hover {
+      color: var(--text);
+    }
+    .lang-switch button.active {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .lang-switch .divider {
+      color: var(--border-hover);
+      user-select: none;
+    }
+    main {
+      width: 100%;
+      max-width: 580px;
+      margin: auto;
+    }
+    .title-group {
+      margin-bottom: 28px;
     }
     h1 {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 8px;
     }
-    p.desc {
+    .subtitle {
+      font-size: 14px;
       color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 24px;
+      line-height: 1.5;
     }
-    .box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .box input {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 14px;
-      flex: 1;
-      outline: none;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      font-size: 14px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.15s ease;
-      width: 100%;
-    }
-    .btn:hover {
-      background: var(--primary-hover);
-    }
-    .btn-copy {
-      background: #334155;
-      color: #cbd5e1;
-      padding: 8px 14px;
-      font-size: 13px;
-      border-radius: 6px;
-      width: auto;
-    }
-    .btn-copy:hover {
-      background: #475569;
-    }
-    .btn-copy.copied {
-      background: var(--success);
-      color: white;
-    }
-    .actions {
+    .card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 4px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 8px;
+      gap: 16px;
     }
-    .instructions {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid var(--card-border);
-      color: var(--text-muted);
+    .input-wrap {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg);
+      transition: border-color 0.15s ease;
+    }
+    .input-wrap:focus-within {
+      border-color: var(--border-hover);
+    }
+    .input-wrap input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-mono);
       font-size: 13px;
+      padding: 12px 14px;
+      outline: none;
+      min-width: 0;
+    }
+    .btn-copy {
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 18px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-copy:hover {
+      background: #1f1f1f;
+    }
+    .btn-copy.copied {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 2px;
+      transition: background-color 0.15s ease;
+      letter-spacing: -0.01em;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .info {
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
       line-height: 1.6;
     }
-    .instructions ol {
-      margin-left: 18px;
-      margin-top: 8px;
+    .info-label {
+      color: var(--text);
+      font-weight: 600;
     }
-    .instructions li {
-      margin-bottom: 4px;
-    }
-    .footer {
-      margin-top: 24px;
-      text-align: center;
-      color: #64748b;
+    .mono-meta {
+      font-family: var(--font-mono);
       font-size: 12px;
+      color: var(--text-muted);
+      background: #111;
+      padding: 6px 10px;
+      border-radius: 2px;
+      border: 1px solid #1f1f1f;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    footer {
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto;
+      font-size: 12px;
+      color: #555555;
+      letter-spacing: -0.01em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <span style="font-size: 28px;">🛡️</span>
-      <h1>Signal TLS Proxy</h1>
-    </div>
+  <header>
+    <nav class="lang-switch" aria-label="Language Switcher">
+      <button id="btn-en" type="button" onclick="setLanguage('en')">EN</button>
+      <span class="divider">/</span>
+      <button id="btn-zh" type="button" class="active" onclick="setLanguage('zh')">中文</button>
+    </nav>
+  </header>
 
-    <div class="badge">
-      <div class="badge-dot"></div>
-      服务正常运行 (Fly.io)
-    </div>
-
-    <p class="desc">
-      这是一个高可用、端到端加密的 Signal 抗审查专属代理通道。使用下方链接即可在 Signal 客户端上一键连接。
-    </p>
-
-    <div class="box">
-      <input type="text" id="shareUrl" value="{{SHARE_URL}}" readonly>
-      <button class="btn btn-copy" id="copyBtn" onclick="copyUrl()">复制</button>
-    </div>
-
-    <div class="actions">
-      <a href="{{SHARE_URL}}" class="btn" target="_blank">一键连接 Signal</a>
-    </div>
-
-    <div class="instructions">
-      <strong>使用方法：</strong>
-      <ol>
-        <li><strong>自动配置</strong>：点击上方“一键连接 Signal”按钮，手机会自动唤起 Signal App 并提示开启代理。</li>
-        <li><strong>手动配置</strong>：在 Signal 中打开 <code>设置 &gt; 数据与存储 &gt; 使用代理</code>，填入地址 <code>{{HOST}}:443</code>。</li>
-      </ol>
-      <p style="margin-top: 10px; font-size: 12px; color: #64748b;">
-        🔒 隐私保证：本代理基于 TLS-in-TLS 零知识隧道架构，所有聊天、附件及音视频通话均由端到端公钥加密，中继节点无权且无法查看任何通讯内容。
+  <main>
+    <div class="title-group">
+      <h1>Sinel: A Signal TLS Proxy</h1>
+      <p class="subtitle" id="subtitle"
+         data-en="End-to-end encrypted relay for Signal censorship circumvention."
+         data-zh="端到端加密的 Signal 抗审查专属代理通道。">
+        端到端加密的 Signal 抗审查专属代理通道。
       </p>
     </div>
-  </div>
 
-  <div class="footer">
-    Powered by Signal TLS Proxy (Rust Edition) &bull; Host: {{HOST}}
-  </div>
+    <div class="card">
+      <div class="input-wrap">
+        <input type="text" id="shareUrl" value="{{SHARE_URL}}" readonly spellcheck="false">
+        <button class="btn-copy" id="copyBtn" type="button" onclick="copyProxyUrl()">
+          <span id="copyBtnText" data-en="Copy" data-zh="复制">复制</span>
+        </button>
+      </div>
+
+      <a href="{{SHARE_URL}}" class="btn-primary" id="openBtn" target="_blank" rel="noopener noreferrer"
+         data-en="Connect to Signal"
+         data-zh="一键连接 Signal">
+        一键连接 Signal
+      </a>
+
+      <div class="info">
+        <div>
+          <span class="info-label" id="guideLabel" data-en="Manual Setup:" data-zh="手动配置：">手动配置：</span>
+          <span id="guideText"
+                data-en="In Signal App, go to Settings &gt; Data and storage &gt; Use proxy."
+                data-zh="在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。">
+            在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。
+          </span>
+        </div>
+        <div>
+          <span class="mono-meta">{{HOST}}:443</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Sinel</span>
+    <span>{{HOST}}</span>
+  </footer>
 
   <script>
-    function copyUrl() {
+    let currentLang = 'zh';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+      document.querySelectorAll('[data-en]').forEach(el => {
+        el.textContent = el.getAttribute('data-' + lang);
+      });
+
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+
+      try {
+        localStorage.setItem('sinel_lang', lang);
+      } catch (e) {}
+    }
+
+    function copyProxyUrl() {
       const input = document.getElementById('shareUrl');
       input.select();
       navigator.clipboard.writeText(input.value).then(() => {
-        const btn = document.getElementById('copyBtn');
-        btn.textContent = '已复制!';
-        btn.classList.add('copied');
+        const textSpan = document.getElementById('copyBtnText');
+        const originalText = textSpan.textContent;
+        textSpan.textContent = currentLang === 'zh' ? '已复制' : 'Copied';
+        document.getElementById('copyBtn').classList.add('copied');
+
         setTimeout(() => {
-          btn.textContent = '复制';
-          btn.classList.remove('copied');
-        }, 2000);
+          textSpan.textContent = originalText;
+          document.getElementById('copyBtn').classList.remove('copied');
+        }, 1500);
       });
     }
+
+    (function initLang() {
+      try {
+        const saved = localStorage.getItem('sinel_lang');
+        if (saved && (saved === 'en' || saved === 'zh')) {
+          setLanguage(saved);
+          return;
+        }
+      } catch (e) {}
+
+      const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (!userLang.startsWith('zh')) {
+        setLanguage('en');
+      }
+    })();
   </script>
 </body>
 </html>
