@@ -45,74 +45,58 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 | **公网出站流量** | 每月免费赠送 100 GB | $0.00 | **$0.00** |
 | **SSL/TLS 证书**| Fly.io 自动化 Let's Encrypt 证书 | 免费 | **$0.00** |
 
-> **提示**：保持 `fly.toml` 中的 `memory = "256mb"` 与单个实例运行，即可永久处于 $0 账单区间。
+> **提示**：保持机器配置为 `shared-cpu-1x` + `256MB` 且单个实例常驻，即可永久处于 $0 账单区间。
 
 ---
 
-## 快速开始：Fork 本项目一键部署（纯 Web 界面操作，无需命令行）
+## 快速开始：Fork 一键网页直连部署（最推荐，零门槛、无需 Token）
 
-> 💡 **无需在你的电脑上安装任何工具（无需 `flyctl`、无需 Docker、无需 Rust 编译环境）**，只需在 GitHub 和 Fly.io 网页控制台（Web Dashboard）点击配置即可。
+> 💡 **无需安装任何工具（无 `flyctl`、无 Docker、无 Rust 编译环境）**，整个过程通过 GitHub 与 Fly.io 网页控制台完成，且**无需生成或填写任何 Token**。
 
 ### 步骤 1：Fork 本仓库到你的账号
-1. 点击本页面右上角的 **Fork** 按钮，将项目复制到你自己的 GitHub 账号下。
-2. 进入你 Fork 后的仓库，切换到 **Actions** 标签页，点击绿色按钮 **"I understand my workflows, go ahead and enable them"** 启用自动工作流（GitHub 默认会对所有 Fork 仓库禁用工作流，必须手动点击一次启用）。
+点击本页面右上角的 **Fork** 按钮，将项目完整复制到你自己的 GitHub 账号下。
 
-### 步骤 2：在 Fly.io 网页端创建应用与获取 Token
-打开浏览器访问 [Fly.io 控制台 (https://fly.io/dashboard)](https://fly.io/dashboard)：
+---
 
-1. **注册并登录账号**（新用户首次需在个人设置中绑定一张外币信用卡验资，只要保持单实例，账单低于 $5 不产生扣费）。
-2. **创建应用**：
-   * 点击控制台右上角的 **Launch an app** 或 **Create App**；
-   * 选择 **"Start from scratch"**（从空白创建）；
-   * 自定义一个 **App Name（应用名称）**（全球唯一，例如 `my-signal-proxy-2026`），选择离你较近的地域（例如 Hong Kong `hkg`、Tokyo `nrt`、San Jose `sjc` 等）；
-   * 记录好这个应用名称。
-3. **获取 API 访问令牌 (Token)**：
-   * 点击右上角个人头像 -> 进入 **Account Settings**（个人账户设置）；
-   * 左侧菜单选择 **Access Tokens**；
-   * 在页面中输入名称（例如 `github-deploy`），点击 **Create Token**；
-   * 复制生成的 Token 字符串备用（以 `FlyV1 ...` 开头）。
+### 步骤 2：在 Fly.io 网页控制台一键直连部署
+1. 访问并登录 [Fly.io 控制台 (https://fly.io/dashboard)](https://fly.io/dashboard)（新用户需在个人设置中绑定一张外币信用卡验资，月账单低于 $5 实际扣费为 $0）。
+2. 在控制台点击 **Launch an app from GitHub**（从现有 GitHub 仓库创建应用）。
+3. 授权并选中你刚才 Fork 的仓库，页面会展示部署表单，对照以下要求填写：
 
-### 步骤 3：在 Fork 仓库的 GitHub 网页中配置变量
-回到你刚刚 Fork 的 GitHub 仓库页面：
+| 表单配置项 | 推荐填写值 | 说明与注意事项 |
+| :--- | :--- | :--- |
+| **App Name** | 自定义唯一名称 | 例如 `my-signal-proxy-2026`（全局唯一） |
+| **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 亚洲及国内访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`（注：Fly.io 该列表暂无香港 hkg 选项）。 |
+| **Internal port** | **`8080`** | **核心重点！** 必须填写 `8080`（我们的 Rust 代理服务在容器内监听 8080 端口）。 |
+| **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **免费层关键保障！** 保持该最低规格，月度计费仅约 $1.94，自动触发 Fly.io 低于 $5 全额免单政策。 |
+| **Environment Variables** | 留空（无需添加） | 代码中已全部内置合理的默认参数（包含官方全量域名白名单）。 |
+| **Database** | **不勾选**（Managed Postgres） | 纯内存流式网络代理，不需要任何数据库。 |
+| **Working directory** | 留空（默认 `./`） | 默认即可。 |
+| **Config path** | 留空（默认 `./fly.toml`） | 默认即可，Fly.io 会自动读取项目中的 `fly.toml` 挂载 443 端口 `handlers = ["tls"]` 外层解密规则。 |
 
-1. **添加部署 Token (Secret)**：
-   * 依次点击：**Settings** -> 左侧 **Secrets and variables** -> **Actions** -> **Repository secrets**；
-   * 点击绿色按钮 **New repository secret**：
-     * **Name**: 填写 `FLY_API_TOKEN`
-     * **Secret**: 粘贴上一步复制的 Fly Access Token
-   * 点击 **Add secret** 保存。
+4. 检查无误后，直接点击底部的紫色 **Deploy** 按钮！Fly.io 云端会自动拉取你的仓库并编译上线。
 
-2. **绑定应用名称 (Variable)**：
-   * 在同一个界面的 **Variables** 标签页中，点击 **New repository variable**：
-     * **Name**: 填写 `FLY_APP_NAME`
-     * **Value**: 填写在步骤 2 中创建的 Fly 应用名称（例如 `my-signal-proxy-2026`）
-   * 点击 **Add variable** 保存。
+---
 
-### 步骤 4：在 GitHub Actions 触发一键部署
-1. 切换到 Fork 仓库顶部的 **Actions** 标签页。
-2. 在左侧列表中点击 **"Deploy to Fly.io"**。
-3. 点击右侧下拉按钮 **"Run workflow"** -> 点击绿色按钮 **"Run workflow"**。
-4. GitHub Actions 会自动调用 Fly.io 云端构建机完成多阶段 Docker 编译并全自动上线！以后只要有代码更新，重新触发即可完成无缝平滑升级。
-
-### 步骤 5：在 Fly.io 网页端绑定域名与 IP
+### 步骤 3：在 Fly.io 网页端绑定域名与 IP（仅需首次配置一次）
 部署成功后，为代理绑定你的专属自定义域名：
 
 1. **分配独立 IP 地址**：
-   * 在 [Fly.io Dashboard](https://fly.io/dashboard) 点击进入你的应用；
+   * 在 [Fly.io Dashboard](https://fly.io/dashboard) 点击进入刚创建的应用；
    * 左侧菜单点击 **IP Addresses**；
-   * 点击 **Allocate IPv4** 分配一个专用的 Anycast IPv4，再点击 **Allocate IPv6** 分配一个 IPv6 地址；
-   * 记下生成的 IPv4 和 IPv6 地址。
+   * 点击 **Allocate IPv4** 分配专用 Anycast IPv4，再点击 **Allocate IPv6** 分配 IPv6 地址；
+   * 复制生成的 IPv4 和 IPv6 地址。
 2. **添加自定义域名与证书**：
    * 左侧菜单点击 **Certificates**；
    * 点击右上角 **Add a Certificate**；
    * 输入你的二级域名（例如 `signal.yourdomain.com`），点击 **Create Certificate**。
 3. **设置域名 DNS 解析**：
-   * 前往你的域名 DNS 服务商（如 Cloudflare / DNSPod / 阿里云 / NameSilo）；
+   * 前往你的域名 DNS 服务商（如 Cloudflare / DNSPod / 阿里云 / NameSilo 等）；
    * 添加两条解析记录：
      * **A 记录**：主机记录填 `signal` -> 记录值填分配的 **IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
      * **AAAA 记录**：主机记录填 `signal` -> 记录值填分配的 **IPv6**。
-4. **等待证书就绪**：
-   * DNS 生效后，Fly.io 网页端的 Certificates 页面会在 1~2 分钟内自动变为绿色勾选的 `Ready`，说明外层 TLS 证书配置成功！
+4. **验证证书就绪**：
+   * DNS 生效后，Fly.io 网页端 Certificates 页面的域名状态会在 1~2 分钟内变为绿色勾选的 `Ready`，说明外层 TLS 证书已自动就绪！
 
 ---
 
@@ -131,13 +115,13 @@ https://signal.tube/#signal.yourdomain.com
 
 ## 进阶：终端开发者本地 CLI 操作指引
 
-如果你更习惯使用终端命令行，也可以通过 `flyctl` 完成所有步骤：
+如果你习惯使用终端命令行，也可以通过 `flyctl` 完成所有步骤：
 
 ```bash
 # 1. 登录终端
 fly auth login
 
-# 2. 本地直接发布
+# 2. 本地直接发布 (可选择 sin 或 nrt 区域)
 fly launch --no-deploy
 fly deploy
 
