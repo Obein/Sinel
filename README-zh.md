@@ -70,7 +70,7 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 | 表单配置项 | 推荐填写值 | 说明与注意事项 |
 | :--- | :--- | :--- |
 | **App Name** | 自定义唯一名称 | 例如 `my-signal-proxy-2026`（全局唯一） |
-| **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 亚洲及国内访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`（注：Fly.io 该列表暂无香港 hkg 选项）。 |
+| **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 中国大陆境内及亚太地区访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`（注：Fly.io 该列表暂无香港 hkg 选项）。 |
 | **Internal port** | **`8080`** | **核心重点！** 必须填写 `8080`（我们的 Rust 代理服务在容器内监听 8080 端口）。 |
 | **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **免费层关键保障！** 保持该最低规格，月度计费仅约 $1.94，自动触发 Fly.io 低于 $5 全额免单政策。 |
 | **Environment Variables** | 留空（无需添加） | 代码中已全部内置合理的默认参数（包含官方全量域名白名单）。 |
