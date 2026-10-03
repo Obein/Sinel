@@ -40,6 +40,8 @@ pub fn is_whatsapp_handshake(buf: &[u8]) -> bool {
 /// Builds an RFC-compliant HAProxy PROXY Protocol v1 header line.
 ///
 /// Format: `PROXY <TCP4|TCP6> <src_ip> <dst_ip> <src_port> 443\r\n`
+/// If the endpoints cannot be paired into matching address families,
+/// it gracefully falls back to `PROXY UNKNOWN\r\n` as required by the specification.
 pub fn build_proxy_v1_header(peer_addr: SocketAddr, local_addr: Option<SocketAddr>) -> String {
     let dst_port = 443;
     match (peer_addr, local_addr) {
@@ -49,12 +51,7 @@ pub fn build_proxy_v1_header(peer_addr: SocketAddr, local_addr: Option<SocketAdd
         (SocketAddr::V6(src), Some(SocketAddr::V6(dst))) => {
             format!("PROXY TCP6 {} {} {} {}\r\n", src.ip(), dst.ip(), src.port(), dst_port)
         }
-        (SocketAddr::V4(src), _) => {
-            format!("PROXY TCP4 {} 127.0.0.1 {} {}\r\n", src.ip(), src.port(), dst_port)
-        }
-        (SocketAddr::V6(src), _) => {
-            format!("PROXY TCP6 {} ::1 {} {}\r\n", src.ip(), src.port(), dst_port)
-        }
+        _ => "PROXY UNKNOWN\r\n".to_string(),
     }
 }
 
@@ -176,6 +173,17 @@ mod tests {
     fn test_build_proxy_v1_header_fallback() {
         let src = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 45678));
         let header = build_proxy_v1_header(src, None);
-        assert_eq!(header, "PROXY TCP4 192.0.2.1 127.0.0.1 45678 443\r\n");
+        assert_eq!(header, "PROXY UNKNOWN\r\n");
+
+        // Mismatched IP families (V6 peer, V4 local)
+        let src_v6 = SocketAddr::V6(SocketAddrV6::new(
+            Ipv6Addr::new(0xfdaa, 0, 0, 0, 0, 0, 0, 1),
+            45678,
+            0,
+            0,
+        ));
+        let dst_v4 = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(172, 19, 0, 2), 8080));
+        let header_mismatch = build_proxy_v1_header(src_v6, Some(dst_v4));
+        assert_eq!(header_mismatch, "PROXY UNKNOWN\r\n");
     }
 }
