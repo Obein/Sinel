@@ -73,8 +73,8 @@ Click the **Fork** button at the top-right corner of this repository to copy it 
 | :--- | :--- | :--- |
 | **App Name** | Unique custom name | e.g. `my-signal-proxy-2026` (must be globally unique) |
 | **Region** | **`sin - Singapore, Singapore`** or **`nrt - Tokyo, Japan`** | Lower latency for Asian regions. For US West, choose `sjc - San Jose` or `lax - Los Angeles`. |
-| **Internal port** | **`8080`** | **CRITICAL!** Must be `8080` (the Rust proxy listens on internal port 8080). |
-| **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **Free Tier Requirement!** This configuration costs only ~$1.94/month, falling well below the $5 waiver limit. |
+| **Internal port** | **`8080`** | **CRITICAL** Must be `8080` (the Rust proxy listens on internal port 8080). |
+| **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **Free Tier Requirement.** This configuration costs only ~$1.94/month, falling well below the $5 waiver limit. |
 | **Environment Variables** | Leave blank | Code includes sensible pre-configured defaults. |
 | **Database** | **Leave unchecked** (Managed Postgres) | Not needed; proxy runs entirely in memory. |
 | **Working directory** | Leave blank (default `./`) | Keep default. |
@@ -84,17 +84,17 @@ Click the **Fork** button at the top-right corner of this repository to copy it 
 
 ---
 
-### Step 3: Allocate Public IP Addresses (Crucial Step!)
+### Step 3: Allocate Public IP Addresses (Crucial)
 Newly created Fly.io applications do not have public IP addresses by default (`fly.dev` will not resolve until an IP is assigned):
 
 1. In the [Fly.io Dashboard](https://fly.io/dashboard), navigate to your app's **Overview** page;
 2. Scroll down to the **Networking** section. Under **IP addresses**, you will see `This app has no IP addresses`;
 3. **Allocate Free IPs (Please follow carefully)**:
-   * **Click `Assign Shared IPv4`**: **[REQUIRED! 100% FREE $0.00]** Fly.io's Anycast Shared IPv4 routes incoming connections using TLS SNI, matching the TLS-in-TLS proxy architecture seamlessly.
-   * **Click `Assign Dedicated IPv6`**: **[RECOMMENDED! 100% FREE $0.00]** Grants a free dedicated IPv6 address.
+   * **Click `Assign Shared IPv4`**: **[REQUIRED, 100% FREE $0.00]** Fly.io's Anycast Shared IPv4 routes incoming connections using TLS SNI, matching the TLS-in-TLS proxy architecture seamlessly.
+   * **Click `Assign Dedicated IPv6`**: **[RECOMMENDED, 100% FREE $0.00]** Grants a free dedicated IPv6 address.
    * ⚠️ **DO NOT click `Assign Dedicated IPv4`**: Dedicated IPv4 incurs a charge of $2.00/month and is unnecessary for this project.
    * **Ignore `Assign Flycast IPv6`**: This is for internal 6PN private networks only and cannot be accessed from the public internet.
-4. Once allocated, your public IP addresses will be displayed, and your proxy is now accessible from the internet!
+4. Once allocated, your public IP addresses will be displayed, and your proxy is now accessible from the internet.
 
 ---
 

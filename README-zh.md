@@ -71,28 +71,28 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 | :--- | :--- | :--- |
 | **App Name** | 自定义唯一名称 | 例如 `my-signal-proxy-2026`（全局唯一） |
 | **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 中国大陆境内及亚太地区访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`。 |
-| **Internal port** | **`8080`** | **核心重点！** 必须填写 `8080`（我们的 Rust 代理服务在容器内监听 8080 端口）。 |
-| **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **免费层关键保障！** 保持该最低规格，月度计费仅约 $1.94，自动触发 Fly.io 低于 $5 全额免单政策。 |
+| **Internal port** | **`8080`** | **重点** 必须填写 `8080`（我们的 Rust 代理服务在容器内监听 8080 端口）。 |
+| **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **免费层关键保障。** 保持该最低规格，月度计费仅约 $1.94，自动触发 Fly.io 低于 $5 全额免单政策。 |
 | **Environment Variables** | 留空（无需添加） | 代码中已全部内置合理的默认参数（包含官方全量域名白名单）。 |
 | **Database** | **不勾选**（Managed Postgres） | 纯内存流式网络代理，不需要任何数据库。 |
 | **Working directory** | 留空（默认 `./`） | 默认即可。 |
 | **Config path** | 留空（默认 `./fly.toml`） | 默认即可，Fly.io 会自动读取项目中的 `fly.toml` 挂载 443 端口 `handlers = ["tls"]` 外层解密规则。 |
 
-4. 检查无误后，直接点击底部的紫色 **Deploy** 按钮！Fly.io 云端会自动拉取你的仓库并编译上线。
+4. 检查无误后，直接点击底部的紫色 **Deploy** 按钮。Fly.io 云端会自动拉取你的仓库并编译上线。
 
 ---
 
-### 步骤 3：在 Fly.io 网页端分配公网 IP 地址（关键！必须操作）
+### 步骤 3：在 Fly.io 网页端分配公网 IP 地址（关键）
 新创建的 Fly 应用默认没有分配公网 IP 地址（因此 `fly.dev` 域名在分配 IP 前是无法从互联网解析访问的）：
 
 1. 在 [Fly.io Dashboard](https://fly.io/dashboard) 点击进入刚创建的应用 **Overview（概览）** 页面；
 2. 向下滚动到 **Networking** 区域，在 **IP addresses** 下方会看到 `This app has no IP addresses`；
 3. **点击分配免费 IP（请仔细对照选择）**：
-   * **点击 `Assign Shared IPv4`**：**【必点！完全免费 $0.00】** Fly.io 官方提供的 Anycast 共享 IPv4，它是基于 TLS 握手中的 SNI（域名）来识别并路由流量的，与本项目的 TLS-in-TLS 架构完美契合！
-   * **点击 `Assign Dedicated IPv6`**：**【建议点击！完全免费 $0.00】** 免费获得一个独立的专用 IPv6 地址。
+   * **点击 `Assign Shared IPv4`**：**【必点，完全免费 $0.00】** Fly.io 官方提供的 Anycast 共享 IPv4，它是基于 TLS 握手中的 SNI（域名）来识别并路由流量的，与本项目的 TLS-in-TLS 架构完美契合。
+   * **点击 `Assign Dedicated IPv6`**：**【建议点击，完全免费 $0.00】** 免费获得一个独立的专用 IPv6 地址。
    * ⚠️ **切勿点击 `Assign Dedicated IPv4`**：这是独立独享 IPv4，每月需收取 $2.00 费用，本项目完全不需要。
    * **忽略 `Assign Flycast IPv6`**：这是 Fly 平台内部私有网络专用的，外部公网无法访问。
-4. 分配完成后，下方会立即列出生成的公共 IP 地址，此时你的应用正式获得公网入口！
+4. 分配完成后，下方会立即列出生成的公共 IP 地址，此时你的应用正式获得公网入口。
 
 ---
 
@@ -110,7 +110,7 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
      * **A 记录**：主机记录填 `sinel` -> 记录值填刚才分配的 **Shared IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
      * **AAAA 记录**：主机记录填 `sinel` -> 记录值填刚才分配的 **Dedicated IPv6**。
 3. **验证证书就绪**：
-   * DNS 生效后，Fly.io 网页端 Certificates 页面的域名状态会在 1~2 分钟内变为绿色勾选的 `Ready`，说明外层 TLS 证书已自动就绪！
+   * DNS 生效后，Fly.io 网页端 Certificates 页面的域名状态会在 1~2 分钟内变为绿色勾选的 `Ready`，说明外层 TLS 证书已自动就绪。
 
 ---
 
