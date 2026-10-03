@@ -34,6 +34,11 @@ primary_region = "sin"
     port = 443
     handlers = ["tls"]
 
+  # Port 587: WhatsApp Media traffic (raw TCP passthrough directly routed to *.whatsapp.net:443)
+  [[services.ports]]
+    port = 587
+    handlers = []
+
   [[services.tcp_checks]]
     interval = "30s"
     timeout = "5s"
