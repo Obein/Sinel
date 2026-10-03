@@ -7,7 +7,7 @@ description = "A lightweight, memory-efficient Signal TLS-in-TLS relay proxy opt
 license = "MIT"
 
 [dependencies]
-tokio = { version = "1.40", features = ["rt-multi-thread", "net", "io-util", "time"] }
+tokio = { version = "1.40", features = ["rt-multi-thread", "net", "io-util", "time", "sync"] }
 log = "0.4"
 env_logger = "0.11"
 
