@@ -98,19 +98,19 @@ Newly created Fly.io applications do not have public IP addresses by default (`f
 
 ---
 
-### Step 4: Configure Custom Domain & TLS Certificates (Anti-Censorship Essential)
+### Step 4: Configure Custom Domain & TLS Certificates (Optional Anti-Censorship)
 Direct `fly.dev` domains are frequently blocked by national firewalls. Setting up a custom domain is strongly recommended:
 
 1. **Add Certificate in Fly.io**:
    * In your app's left sidebar, click **Certificates**;
    * Click **Add a Certificate** in the top right;
-   * Enter your subdomain (e.g. `signal.yourdomain.com`) and click **Create Certificate**;
+   * Enter your subdomain (e.g. `sinel.yourdomain.com`) and click **Create Certificate**;
    * Fly.io will display the required DNS configuration records.
 2. **Configure DNS Records**:
    * Log into your DNS provider (e.g., Cloudflare, Namecheap, DNSPod, etc.);
    * Add the following DNS records:
-     * **A Record**: Name `signal` -> Value: Your assigned **Shared IPv4** (If using Cloudflare, **ensure proxy status is set to DNS-Only / gray cloud**).
-     * **AAAA Record**: Name `signal` -> Value: Your assigned **Dedicated IPv6**.
+     * **A Record**: Name `sinel` -> Value: Your assigned **Shared IPv4** (If using Cloudflare, **ensure proxy status is set to DNS-Only / gray cloud**).
+     * **AAAA Record**: Name `sinel` -> Value: Your assigned **Dedicated IPv6**.
 3. **Verify Certificate Status**:
    * Once DNS propagates, the certificate status on the Fly.io Certificates page will turn into a green checkmark (`Ready`) within 1–2 minutes.
 
@@ -124,8 +124,8 @@ https://signal.tube/#signal.yourdomain.com
 ```
 
 **Client Setup**:
-1. **Web UI Direct Setup**: Visit `https://signal.yourdomain.com` in your browser. The built-in Swiss Design Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
-2. **Manual Setup**: Open Signal App -> **Settings** -> **Data and Storage** -> **Use Proxy** -> Toggle **ON** and enter `signal.yourdomain.com:443`.
+1. **Web UI Direct Setup**: Visit `https://sinel.yourdomain.com` in your browser. The built-in Swiss Design Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
+2. **Manual Setup**: Open Signal App -> **Settings** -> **Data and Storage** -> **Use Proxy** -> Toggle **ON** and enter `sinel.yourdomain.com:443`.
 
 ---
 

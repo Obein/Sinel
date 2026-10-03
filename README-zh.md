@@ -70,7 +70,7 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 | 表单配置项 | 推荐填写值 | 说明与注意事项 |
 | :--- | :--- | :--- |
 | **App Name** | 自定义唯一名称 | 例如 `my-signal-proxy-2026`（全局唯一） |
-| **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 中国大陆境内及亚太地区访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`（注：Fly.io 该列表暂无香港 hkg 选项）。 |
+| **Region** | **`sin - Singapore, Singapore`** 或 **`nrt - Tokyo, Japan`** | 中国大陆境内及亚太地区访问延迟较低；美西可备选 `sjc - San Jose` 或 `lax - Los Angeles`。 |
 | **Internal port** | **`8080`** | **核心重点！** 必须填写 `8080`（我们的 Rust 代理服务在容器内监听 8080 端口）。 |
 | **Machine Sizes**<br>• CPU(s)<br>• Memory | <br>**`shared-cpu-1x`**<br>**`256MB`** | **免费层关键保障！** 保持该最低规格，月度计费仅约 $1.94，自动触发 Fly.io 低于 $5 全额免单政策。 |
 | **Environment Variables** | 留空（无需添加） | 代码中已全部内置合理的默认参数（包含官方全量域名白名单）。 |
@@ -96,19 +96,19 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 
 ---
 
-### 步骤 4：在 Fly.io 网页端绑定自定义域名与证书（抗封锁核心）
+### 步骤 4：在 Fly.io 网页端绑定自定义域名与证书（可选抗封锁）
 直接使用 `fly.dev` 公共域名在大多数地区会被防火墙列入黑名单，**必须绑定你自己的独立域名**才能起到真正的伪装效果：
 
 1. **添加域名**：
    * 在应用左侧菜单栏点击 **Certificates**；
    * 点击右上角紫色按钮 **Add a Certificate**；
-   * 输入你的二级域名（例如 `signal.yourdomain.com`），点击 **Create Certificate**；
+   * 输入你的二级域名（例如 `sinel.yourdomain.com`），点击 **Create Certificate**；
    * 页面会给出详细的 DNS 配置指令（包含需要指向的 IP 地址或 CNAME 值）。
 2. **设置域名 DNS 解析**：
    * 前往你的域名 DNS 服务商（如 Cloudflare / DNSPod / 阿里云 / NameSilo 等）；
    * 添加两条解析记录：
-     * **A 记录**：主机记录填 `signal` -> 记录值填刚才分配的 **Shared IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
-     * **AAAA 记录**：主机记录填 `signal` -> 记录值填刚才分配的 **Dedicated IPv6**。
+     * **A 记录**：主机记录填 `sinel` -> 记录值填刚才分配的 **Shared IPv4**（若使用 Cloudflare，**必须保持灰色云朵 DNS Only**）。
+     * **AAAA 记录**：主机记录填 `sinel` -> 记录值填刚才分配的 **Dedicated IPv6**。
 3. **验证证书就绪**：
    * DNS 生效后，Fly.io 网页端 Certificates 页面的域名状态会在 1~2 分钟内变为绿色勾选的 `Ready`，说明外层 TLS 证书已自动就绪！
 
@@ -118,12 +118,12 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 
 代理配置生效后，即可生成官方标准分享短链：
 ```
-https://signal.tube/#signal.yourdomain.com
+https://signal.tube/#sinel.yourdomain.com
 ```
 
 **客户端使用方式**：
-1. **网页直达 / 自动配置**：浏览器访问 `https://signal.yourdomain.com`，使用内置的 Swiss Design Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
-2. **手动配置**：打开 Signal App -> **设置** -> **数据与存储** -> **使用代理** -> 开启开关并填入 `signal.yourdomain.com:443`。
+1. **网页直达 / 自动配置**：浏览器访问 `https://sinel.yourdomain.com`，使用内置的 Swiss Design Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
+2. **手动配置**：打开 Signal App -> **设置** -> **数据与存储** -> **使用代理** -> 开启开关并填入 `sinel.yourdomain.com:443`。
 
 ---
 
