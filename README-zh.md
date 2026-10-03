@@ -63,7 +63,7 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 ---
 
 ### 步骤 2：在 Fly.io 网页控制台一键直连部署
-1. 访问并登录 [Fly.io 控制台 (https://fly.io/dashboard)](https://fly.io/dashboard)（新用户需在个人设置中绑定一张外币信用卡验资，月账单低于 $5 实际扣费为 $0）。
+1. 访问并登录 [Fly.io 控制台 (https://fly.io/dashboard)](https://fly.io/dashboard)（新用户需在个人设置中绑定一张信用卡验资，月账单低于 $5 实际扣费为 $0）。
 2. 在控制台点击 **Launch an app from GitHub**（从现有 GitHub 仓库创建应用）。
 3. 授权并选中你刚才 Fork 的仓库，页面会展示部署表单，对照以下要求填写：
 
