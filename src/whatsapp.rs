@@ -107,21 +107,28 @@ pub async fn handle_whatsapp(
     }
 
     let upstream_addr = get_whatsapp_upstream();
-    info!("[{}] Routing WhatsApp chat connection to upstream: {}", peer_addr, upstream_addr);
+    let msg_route = format!("[{}] Routing WhatsApp chat connection to upstream: {}", peer_addr, upstream_addr);
+    info!("{}", msg_route);
+    crate::proxy::record_log(msg_route);
 
     let local_addr = client.local_addr().ok();
     let proxy_header = build_proxy_v1_header(peer_addr, local_addr);
+    crate::proxy::record_log(format!("[{}] Built PROXY header: {:?}", peer_addr, proxy_header));
 
     let (mut upstream, target_addr) = match connect_whatsapp_upstream(&upstream_addr).await {
         Ok((stream, addr)) => {
-            info!("[{}] Established connection to WhatsApp upstream {}", peer_addr, addr);
+            let msg = format!("[{}] Established connection to WhatsApp upstream {}", peer_addr, addr);
+            info!("{}", msg);
+            crate::proxy::record_log(msg);
             (stream, addr)
         }
         Err(err) => {
-            error!(
+            let msg = format!(
                 "[{}] Failed to connect to WhatsApp upstream {}: {}",
                 peer_addr, upstream_addr, err
             );
+            error!("{}", msg);
+            crate::proxy::record_log(msg);
             return Ok(());
         }
     };
@@ -138,16 +145,20 @@ pub async fn handle_whatsapp(
     // 3. Bidirectional full-duplex streaming until either side disconnects
     match tokio::io::copy_bidirectional(client, &mut upstream).await {
         Ok((client_to_upstream, upstream_to_client)) => {
-            info!(
+            let msg = format!(
                 "[{}] WhatsApp tunnel closed: uploaded {} bytes, downloaded {} bytes via {}",
                 peer_addr, client_to_upstream, upstream_to_client, target_addr
             );
+            info!("{}", msg);
+            crate::proxy::record_log(msg);
         }
         Err(err) => {
-            info!(
+            let msg = format!(
                 "[{}] WhatsApp tunnel terminated for {}: {}",
                 peer_addr, target_addr, err
             );
+            info!("{}", msg);
+            crate::proxy::record_log(msg);
         }
     }
 

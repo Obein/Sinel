@@ -6,12 +6,37 @@
 use crate::sni::{get_record_expected_length, parse_sni, SniError};
 use crate::whitelist::is_allowed_domain;
 use log::{debug, error, info, warn};
+use std::collections::VecDeque;
 use std::net::SocketAddr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Semaphore;
+
+static DEBUG_LOGS: Mutex<Option<VecDeque<String>>> = Mutex::new(None);
+
+pub fn record_log(msg: String) {
+    if let Ok(mut lock) = DEBUG_LOGS.lock() {
+        let queue = lock.get_or_insert_with(|| VecDeque::with_capacity(100));
+        if queue.len() >= 100 {
+            queue.pop_front();
+        }
+        queue.push_back(msg);
+    }
+}
+
+pub fn get_logs() -> String {
+    DEBUG_LOGS
+        .lock()
+        .ok()
+        .and_then(|lock| {
+            lock.as_ref()
+                .filter(|q| !q.is_empty())
+                .map(|q| q.iter().cloned().collect::<Vec<_>>().join("\n"))
+        })
+        .unwrap_or_else(|| "No logs recorded yet.\n".to_string())
+}
 
 /// Maximum allowed size for a single TLS ClientHello record (16 KB)
 const MAX_RECORD_SIZE: usize = 16384;
@@ -84,6 +109,7 @@ async fn read_initial_payload(
         let n = client.read(chunk.as_mut_slice()).await?;
         if n == 0 {
             // Connection closed before complete handshake (e.g. health probe)
+            record_log(format!("[{}] Connection closed by client (read 0 bytes)", peer_addr));
             return Ok(HandshakeResult::HttpHandled);
         }
 
@@ -93,8 +119,16 @@ async fn read_initial_payload(
             continue;
         }
 
+        record_log(format!(
+            "[{}] Read {} bytes, hex = {:02X?}",
+            peer_addr,
+            buffer.len(),
+            &buffer[..buffer.len().min(16)]
+        ));
+
         // WhatsApp Noise protocol check
         if crate::whatsapp::is_whatsapp_handshake(buffer) {
+            record_log(format!("[{}] Matched WhatsApp Noise protocol!", peer_addr));
             return Ok(HandshakeResult::WhatsApp);
         }
 
@@ -233,6 +267,23 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
 
 /// Handles standard HTTP requests from web browsers by responding with the Web UI.
 async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAddr) -> std::io::Result<()> {
+    if buffer.starts_with(b"GET /debug_logs") || buffer.starts_with(b"GET /logs") {
+        let logs = get_logs();
+        let resp = format!(
+            "HTTP/1.1 200 OK\r\n\
+             Content-Type: text/plain; charset=utf-8\r\n\
+             Content-Length: {}\r\n\
+             Connection: close\r\n\
+             \r\n\
+             {}",
+            logs.len(),
+            logs
+        );
+        client.write_all(resp.as_bytes()).await?;
+        client.flush().await?;
+        return Ok(());
+    }
+
     let host = crate::web::parse_http_host(buffer).unwrap_or_else(|| {
         std::env::var("FLY_APP_NAME")
             .ok()
