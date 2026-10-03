@@ -92,14 +92,14 @@ Newly created Fly.io applications do not have public IP addresses by default (`f
 3. **Allocate Free IPs (Please follow carefully)**:
    * **Click `Assign Shared IPv4`**: **[REQUIRED, 100% FREE $0.00]** Fly.io's Anycast Shared IPv4 routes incoming connections using TLS SNI, matching the TLS-in-TLS proxy architecture seamlessly.
    * **Click `Assign Dedicated IPv6`**: **[RECOMMENDED, 100% FREE $0.00]** Grants a free dedicated IPv6 address.
-   * ⚠️ **DO NOT click `Assign Dedicated IPv4`**: Dedicated IPv4 incurs a charge of $2.00/month and is unnecessary for this project.
+   * **DO NOT click `Assign Dedicated IPv4`**: Dedicated IPv4 incurs a charge of $2.00/month and is unnecessary for this project.
    * **Ignore `Assign Flycast IPv6`**: This is for internal 6PN private networks only and cannot be accessed from the public internet.
 4. Once allocated, your public IP addresses will be displayed, and your proxy is now accessible from the internet.
 
 ---
 
 ### Step 4: Configure Custom Domain & TLS Certificates (Optional Anti-Censorship)
-Direct `fly.dev` domains are frequently blocked by national firewalls. Setting up a custom domain is strongly recommended:
+Direct `fly.dev` domains may frequently blocked by national firewalls. Setting up a custom domain is recommended:
 
 1. **Add Certificate in Fly.io**:
    * In your app's left sidebar, click **Certificates**;
