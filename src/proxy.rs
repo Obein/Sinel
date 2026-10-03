@@ -18,8 +18,8 @@ static DEBUG_LOGS: Mutex<Option<VecDeque<String>>> = Mutex::new(None);
 
 pub fn record_log(msg: String) {
     if let Ok(mut lock) = DEBUG_LOGS.lock() {
-        let queue = lock.get_or_insert_with(|| VecDeque::with_capacity(100));
-        if queue.len() >= 100 {
+        let queue = lock.get_or_insert_with(|| VecDeque::with_capacity(500));
+        if queue.len() >= 500 {
             queue.pop_front();
         }
         queue.push_back(msg);
@@ -108,8 +108,8 @@ async fn read_initial_payload(
     loop {
         let n = client.read(chunk.as_mut_slice()).await?;
         if n == 0 {
-            // Connection closed before complete handshake (e.g. health probe)
-            record_log(format!("[{}] Connection closed by client (read 0 bytes)", peer_addr));
+            // Connection closed by client before sending data (e.g. Fly.io tcp_check health probe)
+            // Do not pollute debug logs with 0-byte routine probes.
             return Ok(HandshakeResult::HttpHandled);
         }
 
@@ -119,11 +119,18 @@ async fn read_initial_payload(
             continue;
         }
 
+        let preview_len = buffer.len().min(16);
+        let ascii_repr: String = buffer[..preview_len]
+            .iter()
+            .map(|&b| if b.is_ascii_graphic() || b == b' ' { b as char } else { '.' })
+            .collect();
+
         record_log(format!(
-            "[{}] Read {} bytes, hex = {:02X?}",
+            "[{}] Read {} bytes, hex = {:02X?}, text = \"{}\"",
             peer_addr,
             buffer.len(),
-            &buffer[..buffer.len().min(16)]
+            &buffer[..preview_len],
+            ascii_repr
         ));
 
         // WhatsApp Noise protocol check
@@ -156,7 +163,9 @@ async fn read_initial_payload(
                         match parse_sni(buffer) {
                             Ok(hostname) => return Ok(HandshakeResult::Tls(hostname)),
                             Err(err) => {
-                                warn!("[{}] Failed to parse SNI from ClientHello: {}", peer_addr, err);
+                                let msg = format!("[{}] Failed to parse SNI from ClientHello: {}", peer_addr, err);
+                                warn!("{}", msg);
+                                record_log(msg);
                                 return Ok(HandshakeResult::HttpHandled);
                             }
                         }
@@ -166,14 +175,18 @@ async fn read_initial_payload(
                     // Need more bytes to determine full record length
                 }
                 Err(err) => {
-                    warn!("[{}] Invalid TLS record header: {}", peer_addr, err);
+                    let msg = format!("[{}] Invalid TLS record header: {}", peer_addr, err);
+                    warn!("{}", msg);
+                    record_log(msg);
                     return Ok(HandshakeResult::HttpHandled);
                 }
             }
         }
 
         if buffer.len() > MAX_RECORD_SIZE {
-            warn!("[{}] ClientHello exceeded maximum record size", peer_addr);
+            let msg = format!("[{}] ClientHello exceeded maximum record size", peer_addr);
+            warn!("{}", msg);
+            record_log(msg);
             return Ok(HandshakeResult::HttpHandled);
         }
     }
@@ -196,6 +209,9 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
         Ok(Ok(res)) => res,
         Ok(Err(err)) => return Err(err),
         Err(_) => {
+            if !buffer.is_empty() {
+                record_log(format!("[{}] Handshake read timed out after receiving {} bytes", peer_addr, buffer.len()));
+            }
             debug!("[{}] Handshake read timed out", peer_addr);
             return Ok(());
         }
