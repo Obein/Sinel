@@ -17,6 +17,7 @@ primary_region = "sin"
   HOST = "0.0.0.0"
   RUST_LOG = "sinel=info,warn"
   ALLOW_ALL_SIGNAL_SUBDOMAINS = "true"
+  ENABLE_WHATSAPP_PROXY = "true"
 
 [[services]]
   internal_port = 8080

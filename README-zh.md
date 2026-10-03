@@ -8,10 +8,10 @@
 
 ## 架构与工作原理
 
-本代理精准还原了官方 `Signal-TLS-Proxy` 的核心能力，同时巧妙利用了 Fly.io 的网络基础设施：
+本代理精准还原了官方 `Signal-TLS-Proxy` 的核心能力，同时巧妙利用了 Fly.io 的网络基础设施，并实现了 443 端口下的零冲突多协议智能复用：
 
 ```
-[ Signal Client 手机端 ]
+[ 客户端 (Signal / WhatsApp / 浏览器) ]
            │
            │  1. 外层 TLS 连接 (端口 443, SNI: your-domain.com)
            ▼
@@ -20,17 +20,22 @@
            │  • handlers = ["tls"] (解开外层 TLS，不执行任何 HTTP 语法解析)
            ▼
 [ Rust 核心代理服务 (:8080) ]
-           │  2. 接收解密后的 TCP 裸流 (内含内层 TLS ClientHello 或 Web HTTP 请求)
-           │  3. 零拷贝嗅探首包协议：
-           │     ├─ 若为 TLS (0x16)：提取内层 SNI (如 chat.signal.org) 并通过白名单校验
+           │  2. 接收解密后的 TCP 裸流
+           │  3. 零拷贝多协议嗅探分流：
+           │     ├─ 若为 Signal TLS (0x16)：提取内层 SNI (如 chat.signal.org) 并通过白名单校验
+           │     ├─ 若为 WhatsApp Noise (0x57 0x41 / "WA")：注入 HAProxy PROXY v1 报头并转发
            │     └─ 若为普通 HTTP (GET /)：接管并返回极简瑞士风格 Web UI
            ▼
-[ Signal 官方服务器 (chat.signal.org:443) ]
-           • 内层 TLS 端到端直连加密，代理服务器无法解密任何聊天记录与消息内容
+  ┌───────────────┬────────────────────────────┐
+  │ (Signal TLS)  │ (WhatsApp Noise + PROXY v1)│
+  ▼               ▼                            ▼
+[ Signal 官方服务器 ] [ WhatsApp 消息服务器 ] [ 浏览器 Web 界面 ]
+(chat.signal.org:443) (g.whatsapp.net:5222)   (HTTP 200 引导页)
 ```
 
 ### 核心特性
 - **纯粹的 Rust 异步实现**：基于 Tokio 异步网络引擎与零拷贝 TLS SNI 解析器，极速全双工数据流转。
+- **WhatsApp 文字代理同端口复用**：自动识别 WhatsApp 专有 Noise 握手协议（`WA`），组装 RFC 标准 HAProxy PROXY Protocol v1 报头转发至官方服务器（`g.whatsapp.net:5222`），实现单端口 443 下同时支持 Signal 与 WhatsApp 文字中继。
 - **内置瑞士风格 Web 引导页 (Swiss Design UI)**：浏览器直接访问域名时，自动呈现现代瑞士国际排版风格引导页，支持中英双语切换，动态提取当前主机名生成 `signal.tube/#<your_host>` 链接，支持一键复制与唤起 Signal 客户端。
 - **免除证书维护**：依托 Fly.io 边缘托管证书，无需在容器内跑 `certbot` 或挂载卷。
 - **零知识隐私安全**：端到端加密数据在手机与官方服务器之间直接握手，中继服务器无权且无法查看任何内容。
@@ -116,14 +121,29 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 
 ## 获取分享链接与客户端连接
 
+### Signal 客户端使用方式
 代理配置生效后，即可生成官方标准分享短链：
 ```
-https://signal.tube/#sinel.yourdomain.com
+https://signal.tube/#signal.yourdomain.com
 ```
 
-**客户端使用方式**：
-1. **网页直达 / 自动配置**：浏览器访问 `https://sinel.yourdomain.com`，使用内置的 Swiss Design Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
-2. **手动配置**：打开 Signal App -> **设置** -> **数据与存储** -> **使用代理** -> 开启开关并填入 `sinel.yourdomain.com:443`。
+1. **网页直达 / 自动配置**：浏览器访问 `https://signal.yourdomain.com`，使用内置的 Swiss Design Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
+2. **手动配置**：打开 Signal App -> **设置** -> **数据与存储** -> **使用代理** -> 开启开关并填入 `signal.yourdomain.com:443`。
+
+---
+
+### WhatsApp 客户端配置（文字消息）
+Sinel 完美兼容 WhatsApp 官方代理协议（基于 443 端口 TLS）：
+
+1. 打开 WhatsApp -> **设置** -> **存储和数据** -> **代理**；
+2. 开启 **使用代理** 开关；
+3. 点击 **设置代理** 填入域名与端口：
+   - **代理主机**：`signal.yourdomain.com`（或你的 Fly.io 应用域名）
+   - **聊天端口**：`443`
+   - **使用 TLS**：**开启**
+4. 点击保存，状态显示 **已连接** 即可畅通收发文字消息。
+
+> **关于媒体文件的说明**：本代理目前完全支持 WhatsApp **文字聊天、群聊与即时消息**。WhatsApp 官方的媒体传输（图片、语音、视频）需依赖专属媒体端口（`587`、`7777`、`80`），该特性需要绑定独立公网 IPv4，在 Fly.io 免费共享 Anycast IPv4（单端口 443）方案下仅支持文字代理。
 
 ---
 
@@ -158,6 +178,8 @@ fly certs add signal.yourdomain.com
 | `RUST_LOG` | `sinel=info,warn` | 日志详细级别（可调为 `debug` 查看实时转发日志） |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | 是否允许所有 `*.signal.org` 和 `*.voip.signal.org` 子域，防止官方新增 CDN 节点时断联 |
 | `EXTRA_ALLOWED_DOMAINS` | 空 | 额外允许的目标域名（英文逗号分隔） |
+| `ENABLE_WHATSAPP_PROXY` | `true` | 是否开启 WhatsApp 文本代理兼容（`true`/`false`） |
+| `WHATSAPP_UPSTREAM` | `g.whatsapp.net:5222` | WhatsApp 官方消息集群目标上游 |
 
 ---
 

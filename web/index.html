@@ -42,7 +42,7 @@
 
       <div class="info">
         <div>
-          <span class="info-label" id="guideLabel" data-en="Manual Setup:" data-zh="手动配置：">手动配置：</span>
+          <span class="info-label" id="guideLabel" data-en="Signal Setup:" data-zh="Signal 配置：">Signal 配置：</span>
           <span id="guideText"
                 data-en="In Signal App, go to Settings &gt; Data and storage &gt; Use proxy."
                 data-zh="在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。">
@@ -51,6 +51,14 @@
         </div>
         <div>
           <span class="mono-meta">{{HOST}}:443</span>
+        </div>
+        <div style="margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border);">
+          <span class="info-label" id="waGuideLabel" data-en="WhatsApp Proxy:" data-zh="WhatsApp 代理：">WhatsApp 代理：</span>
+          <span id="waGuideText"
+                data-en="Settings &gt; Storage and data &gt; Proxy &gt; Host: {{HOST}}, Port: 443 (TLS: ON)."
+                data-zh="设置 &gt; 存储和数据 &gt; 代理 &gt; 主机：{{HOST}}，端口：443（启用 TLS）。">
+            设置 &gt; 存储和数据 &gt; 代理 &gt; 主机：{{HOST}}，端口：443（启用 TLS）。
+          </span>
         </div>
       </div>
     </div>

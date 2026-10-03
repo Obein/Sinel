@@ -8,10 +8,10 @@ English | [中文](README-zh.md)
 
 ## Architecture & How It Works
 
-This proxy accurately reproduces the core obfuscation mechanism of the official `Signal-TLS-Proxy`, while leveraging Fly.io's global Anycast edge network:
+This proxy accurately reproduces the core obfuscation mechanism of the official `Signal-TLS-Proxy`, while leveraging Fly.io's global Anycast edge network and providing zero-conflict multi-protocol multiplexing on port 443:
 
 ```
-[ Signal Client (Mobile / Desktop) ]
+[ Client (Signal / WhatsApp / Web Browser) ]
            │
            │  1. Outer TLS connection (Port 443, SNI: your-domain.com)
            ▼
@@ -19,22 +19,26 @@ This proxy accurately reproduces the core obfuscation mechanism of the official 
            │  • Automated Let's Encrypt certificate issuance and renewals
            │  • handlers = ["tls"] (terminates outer TLS without HTTP parsing)
            ▼
-[ Rust Core Proxy Service (:8080) ]
-           │  2. Receives decrypted raw TCP stream (containing inner TLS ClientHello or HTTP request)
-           │  3. Zero-copy protocol inspection:
-           │     ├─ If TLS (0x16): Sniffs inner SNI (e.g. chat.signal.org) & validates against whitelist
+[ Rust Core Proxy Engine (:8080) ]
+           │  2. Receives decrypted raw TCP stream
+           │  3. Zero-copy multi-protocol inspection:
+           │     ├─ If Signal TLS (0x16): Sniffs inner SNI (e.g. chat.signal.org) & validates against whitelist
+           │     ├─ If WhatsApp Noise (0x57 0x41 / "WA"): Prepends HAProxy PROXY Protocol v1 header
            │     └─ If HTTP (GET /): Intercepts and serves minimalist Swiss Design Web UI
            ▼
-[ Official Signal Servers (chat.signal.org:443) ]
-           • Inner TLS remains encrypted end-to-end directly with Signal servers;
-             the proxy has zero knowledge of any chat history, voice, or message payloads.
+  ┌───────────────┬────────────────────────────┐
+  │ (Signal TLS)  │ (WhatsApp Noise + PROXY v1)│
+  ▼               ▼                            ▼
+[ Signal Servers ] [ WhatsApp Chat Servers ] [ Browser Web UI ]
+(chat.signal.org:443) (g.whatsapp.net:5222)   (HTTP 200 Dashboard)
 ```
 
 ### Key Features
 - **Pure Rust Asynchronous Engine**: Built on Tokio with a zero-copy TLS ClientHello SNI parser for high-performance, full-duplex TCP streaming.
+- **WhatsApp Text Chat Multiplexing**: Automatically detects incoming WhatsApp Noise protocol handshakes (`WA`) and forwards them to official WhatsApp messaging servers (`g.whatsapp.net:5222`) with the required RFC HAProxy PROXY v1 header, multiplexed seamlessly on the single port 443 without conflicting with Signal or Web traffic.
 - **Built-in Swiss Design Web UI**: When accessed via a standard web browser, it renders a modern Swiss-style landing page with English/Chinese toggle, dynamic hostname detection for `https://signal.tube/#<your_host>`, one-click link copying, and deep-link button to open the Signal app.
 - **Zero Certificate Maintenance**: Fully automated edge certificates via Fly.io. No need to run `certbot`, cron jobs, or mount persistent volumes.
-- **Zero-Knowledge Privacy**: End-to-end encryption takes place directly between the user's device and official Signal servers. The proxy cannot inspect or tamper with any decrypted communication.
+- **Zero-Knowledge Privacy**: End-to-end encryption takes place directly between the user's device and official Signal/WhatsApp servers. The proxy cannot inspect or tamper with any decrypted communication.
 - **Anti-Abuse Whitelist**: Enforces a strict domain whitelist covering official Signal services (`chat.signal.org`, `storage.signal.org`, `sfu.voip.signal.org`, etc.), preventing port scanners from using your instance as an open relay.
 
 ---
@@ -118,14 +122,30 @@ Direct `fly.dev` domains may frequently blocked by national firewalls. Setting u
 
 ## Connecting Clients & Sharing Links
 
+### Signal Client Setup
 Once configured, generate your official standard share link:
 ```
 https://signal.tube/#signal.yourdomain.com
 ```
 
-**Client Setup**:
-1. **Web UI Direct Setup**: Visit `https://sinel.yourdomain.com` in your browser. The built-in Swiss Design Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
-2. **Manual Setup**: Open Signal App -> **Settings** -> **Data and Storage** -> **Use Proxy** -> Toggle **ON** and enter `sinel.yourdomain.com:443`.
+**Connection Methods**:
+1. **Web UI Direct Setup**: Visit `https://signal.yourdomain.com` in your browser. The built-in Swiss Design Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
+2. **Manual Setup**: Open Signal App -> **Settings** -> **Data and Storage** -> **Use Proxy** -> Toggle **ON** and enter `signal.yourdomain.com:443`.
+
+---
+
+### WhatsApp Client Setup (Text Chat)
+Sinel seamlessly supports WhatsApp's official proxy protocol for text messaging over standard TLS port 443:
+
+1. Open WhatsApp -> **Settings** -> **Storage and data** -> **Proxy**;
+2. Tap **Use proxy** (toggle ON);
+3. Tap **Set proxy** and enter your domain:
+   - **Proxy Host**: `signal.yourdomain.com` (or your Fly.io app host)
+   - **Chat Port**: `443`
+   - **Use TLS**: `ON` (Checked)
+4. Tap **Save** and wait for the status to show **Connected**.
+
+> **Note on WhatsApp Media**: This proxy supports WhatsApp **Text Messages, Chats, and Status Updates** on port 443. WhatsApp media transfers (images, voice notes, videos) officially require dedicated ports (`587`, `7777`, `80`), which require a dedicated IPv4 address and cannot be routed over Fly.io's free shared IPv4 single-port TLS tier.
 
 ---
 
@@ -160,6 +180,8 @@ Customizable via the `[env]` block in `fly.toml` or the **Secrets** tab in the F
 | `RUST_LOG` | `sinel=info,warn` | Log level (`debug` enables detailed handshake logs) |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | Allows all `*.signal.org` and `*.voip.signal.org` subdomains |
 | `EXTRA_ALLOWED_DOMAINS` | *(empty)* | Comma-separated list of additional allowed destination domains |
+| `ENABLE_WHATSAPP_PROXY` | `true` | Enable or disable WhatsApp text proxying (`true`/`false`) |
+| `WHATSAPP_UPSTREAM` | `g.whatsapp.net:5222` | WhatsApp official chat upstream endpoint |
 
 ---
 
