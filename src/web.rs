@@ -3,8 +3,27 @@
 //! Serves a self-contained, responsive dashboard when accessed via a web browser,
 //! dynamically adapting to the requested Host domain without external dependencies.
 
-/// Embedded HTML template loaded at compile time from the independent `web/` directory.
-const HTML_TEMPLATE: &str = include_str!("../web/index.html");
+use std::sync::OnceLock;
+
+/// Source templates loaded at compile time from the independent `web/` directory.
+const HTML_SOURCE: &str = include_str!("../web/index.html");
+const STYLE_CSS: &str = include_str!("../web/style.css");
+const SCRIPT_JS: &str = include_str!("../web/app.js");
+
+static ASSEMBLED_TEMPLATE: OnceLock<String> = OnceLock::new();
+
+/// Assembles the separated HTML, CSS, and JS components into a self-contained
+/// single-page template once on startup, maintaining zero runtime overhead and zero extra HTTP roundtrips.
+fn get_assembled_template() -> &'static str {
+    ASSEMBLED_TEMPLATE.get_or_init(|| {
+        let style_tag = format!("<style>\n{}\n</style>", STYLE_CSS.trim());
+        let script_tag = format!("<script>\n{}\n</script>", SCRIPT_JS.trim());
+
+        HTML_SOURCE
+            .replace(r#"<link rel="stylesheet" href="style.css">"#, &style_tag)
+            .replace(r#"<script src="app.js"></script>"#, &script_tag)
+    })
+}
 
 /// Validates that a hostname conforms strictly to RFC 1123 domain syntax.
 ///
@@ -52,7 +71,7 @@ pub fn escape_html(input: &str) -> String {
 pub fn render_html_page(host: &str) -> String {
     let safe_host = escape_html(host);
     let share_url = format!("https://signal.tube/#{}", safe_host);
-    HTML_TEMPLATE
+    get_assembled_template()
         .replace("{{HOST}}", &safe_host)
         .replace("{{SHARE_URL}}", &share_url)
 }
@@ -158,5 +177,18 @@ mod tests {
         let html = render_html_page("signal.example.com");
         assert!(html.contains("https://signal.tube/#signal.example.com"));
         assert!(html.contains("signal.example.com:443"));
+    }
+
+    #[test]
+    fn test_modular_web_assembly() {
+        let html = render_html_page("signal.example.com");
+        // Verify inlined CSS and JS
+        assert!(html.contains("<style>"));
+        assert!(html.contains("--accent: #2c6bed;"));
+        assert!(html.contains("<script>"));
+        assert!(html.contains("function copyProxyUrl()"));
+        // Verify external links are replaced
+        assert!(!html.contains(r#"<link rel="stylesheet" href="style.css">"#));
+        assert!(!html.contains(r#"<script src="app.js"></script>"#));
     }
 }
