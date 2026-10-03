@@ -4,7 +4,6 @@ mod proxy;
 mod sni;
 mod web;
 mod whitelist;
-mod whatsapp;
 
 use log::info;
 use std::env;

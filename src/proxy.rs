@@ -92,7 +92,6 @@ pub async fn run_server(bind_addr: &str) -> std::io::Result<()> {
 enum HandshakeResult {
     Tls(String),
     HttpHandled,
-    WhatsApp,
 }
 
 /// Reads the incoming payload with protocol sniffing.
@@ -132,12 +131,6 @@ async fn read_initial_payload(
             &buffer[..preview_len],
             ascii_repr
         ));
-
-        // WhatsApp Noise protocol check
-        if crate::whatsapp::is_whatsapp_handshake(buffer) {
-            record_log(format!("[{}] Matched WhatsApp Noise protocol!", peer_addr));
-            return Ok(HandshakeResult::WhatsApp);
-        }
 
         // Protocol Sniffing:
         // Signal TLS ClientHello always starts with ContentType 0x16 (Handshake).
@@ -220,10 +213,6 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
     let sni = match handshake_result {
         HandshakeResult::Tls(hostname) => hostname,
         HandshakeResult::HttpHandled => return Ok(()),
-        HandshakeResult::WhatsApp => {
-            info!("[{}] Incoming WhatsApp Noise handshake detected", peer_addr);
-            return crate::whatsapp::handle_whatsapp(&mut client, &buffer, peer_addr).await;
-        }
     };
 
     // Validate SNI against authorized domains whitelist
