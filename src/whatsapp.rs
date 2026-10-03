@@ -4,7 +4,7 @@
 //! prepends the required HAProxy PROXY Protocol v1 header, and streams data
 //! directly to the official WhatsApp messaging infrastructure (g.whatsapp.net:5222).
 
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use std::env;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -14,8 +14,48 @@ use tokio::net::TcpStream;
 /// Default upstream destination for WhatsApp messaging servers
 pub const DEFAULT_WHATSAPP_UPSTREAM: &str = "g.whatsapp.net:5222";
 
-/// Timeout for establishing upstream connection to WhatsApp servers
-const UPSTREAM_TIMEOUT: Duration = Duration::from_secs(10);
+/// Connects to WhatsApp upstream messaging server, prioritizing IPv4 endpoints
+/// for maximum reliability with Meta's official proxy architecture.
+pub async fn connect_whatsapp_upstream(upstream_addr: &str) -> std::io::Result<(TcpStream, SocketAddr)> {
+    let addrs = match tokio::net::lookup_host(upstream_addr).await {
+        Ok(iter) => {
+            let mut list: Vec<SocketAddr> = iter.collect();
+            // Prioritize IPv4 addresses as Meta's WhatsApp proxy infra is optimized for IPv4
+            list.sort_by_key(|addr| match addr {
+                SocketAddr::V4(_) => 0,
+                SocketAddr::V6(_) => 1,
+            });
+            list
+        }
+        Err(e) => return Err(e),
+    };
+
+    if addrs.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("No IP addresses found for WhatsApp upstream {}", upstream_addr),
+        ));
+    }
+
+    let connect_timeout = Duration::from_secs(5);
+    for addr in addrs {
+        debug!("Attempting connection to WhatsApp upstream target {}", addr);
+        match tokio::time::timeout(connect_timeout, TcpStream::connect(addr)).await {
+            Ok(Ok(stream)) => return Ok((stream, addr)),
+            Ok(Err(err)) => {
+                debug!("Failed connecting to WhatsApp upstream {}: {}", addr, err);
+            }
+            Err(_) => {
+                debug!("Connection attempt to WhatsApp upstream {} timed out", addr);
+            }
+        }
+    }
+
+    Err(std::io::Error::new(
+        std::io::ErrorKind::TimedOut,
+        format!("Failed to connect to any resolved address for {}", upstream_addr),
+    ))
+}
 
 /// Checks whether the WhatsApp proxy feature is enabled.
 pub fn is_whatsapp_enabled() -> bool {
@@ -67,24 +107,20 @@ pub async fn handle_whatsapp(
     }
 
     let upstream_addr = get_whatsapp_upstream();
-    debug!("[{}] Routing WhatsApp chat connection to upstream: {}", peer_addr, upstream_addr);
+    info!("[{}] Routing WhatsApp chat connection to upstream: {}", peer_addr, upstream_addr);
 
     let local_addr = client.local_addr().ok();
     let proxy_header = build_proxy_v1_header(peer_addr, local_addr);
 
-    let mut upstream = match tokio::time::timeout(UPSTREAM_TIMEOUT, TcpStream::connect(&upstream_addr)).await {
-        Ok(Ok(stream)) => stream,
-        Ok(Err(err)) => {
+    let (mut upstream, target_addr) = match connect_whatsapp_upstream(&upstream_addr).await {
+        Ok((stream, addr)) => {
+            info!("[{}] Established connection to WhatsApp upstream {}", peer_addr, addr);
+            (stream, addr)
+        }
+        Err(err) => {
             error!(
                 "[{}] Failed to connect to WhatsApp upstream {}: {}",
                 peer_addr, upstream_addr, err
-            );
-            return Ok(());
-        }
-        Err(_) => {
-            error!(
-                "[{}] Connection to WhatsApp upstream {} timed out",
-                peer_addr, upstream_addr
             );
             return Ok(());
         }
@@ -97,19 +133,20 @@ pub async fn handle_whatsapp(
 
     // 2. Forward the buffered initial client payload (starting with b"WA...")
     upstream.write_all(initial_buffer).await?;
+    upstream.flush().await?;
 
     // 3. Bidirectional full-duplex streaming until either side disconnects
     match tokio::io::copy_bidirectional(client, &mut upstream).await {
         Ok((client_to_upstream, upstream_to_client)) => {
-            debug!(
+            info!(
                 "[{}] WhatsApp tunnel closed: uploaded {} bytes, downloaded {} bytes via {}",
-                peer_addr, client_to_upstream, upstream_to_client, upstream_addr
+                peer_addr, client_to_upstream, upstream_to_client, target_addr
             );
         }
         Err(err) => {
-            debug!(
-                "[{}] WhatsApp tunnel terminated with error for {}: {}",
-                peer_addr, upstream_addr, err
+            info!(
+                "[{}] WhatsApp tunnel terminated for {}: {}",
+                peer_addr, target_addr, err
             );
         }
     }

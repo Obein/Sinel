@@ -171,6 +171,7 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
         HandshakeResult::Tls(hostname) => hostname,
         HandshakeResult::HttpHandled => return Ok(()),
         HandshakeResult::WhatsApp => {
+            info!("[{}] Incoming WhatsApp Noise handshake detected", peer_addr);
             return crate::whatsapp::handle_whatsapp(&mut client, &buffer, peer_addr).await;
         }
     };
