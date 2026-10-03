@@ -210,16 +210,20 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
         }
     };
 
-    // Validate SNI against official Signal domains whitelist
+    // Validate SNI against authorized domains whitelist
     if !is_allowed_domain(&sni) {
-        warn!(
-            "[{}] Access denied: destination SNI '{}' is not an authorized Signal domain",
+        let msg = format!(
+            "[{}] Access denied: destination SNI '{}' is not an authorized domain",
             peer_addr, sni
         );
+        warn!("{}", msg);
+        record_log(msg);
         return Ok(());
     }
 
-    debug!("[{}] Routing traffic to authorized Signal endpoint: {}", peer_addr, sni);
+    let route_msg = format!("[{}] Routing TLS traffic to endpoint: {}", peer_addr, sni);
+    debug!("{}", route_msg);
+    record_log(route_msg);
 
     // Connect to official Signal upstream on port 443
     let upstream_addr = format!("{}:443", sni);

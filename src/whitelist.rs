@@ -95,6 +95,18 @@ pub fn is_allowed_domain(sni: &str) -> bool {
         return true;
     }
 
+    // 3. Match WhatsApp endpoints when WhatsApp proxy is enabled
+    if crate::whatsapp::is_whatsapp_enabled()
+        && !lower.starts_with('.')
+        && !lower.contains("..")
+        && (lower == "whatsapp.net"
+            || lower.ends_with(".whatsapp.net")
+            || lower == "whatsapp.com"
+            || lower.ends_with(".whatsapp.com"))
+    {
+        return true;
+    }
+
     false
 }
 
