@@ -8,6 +8,7 @@ use crate::whitelist::is_allowed_domain;
 use log::{debug, error, info, warn};
 use std::collections::VecDeque;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -15,6 +16,31 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Semaphore;
 
 static DEBUG_LOGS: Mutex<Option<VecDeque<String>>> = Mutex::new(None);
+
+/// Global atomic counter for successfully established, active Signal proxy sessions.
+static ACTIVE_SIGNAL_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
+
+/// Returns the current count of active Signal application proxy sessions.
+pub fn get_active_connections() -> usize {
+    ACTIVE_SIGNAL_CONNECTIONS.load(Ordering::Relaxed)
+}
+
+/// RAII guard that tracks the lifecycle of an active Signal proxy session.
+/// Automatically decrements the active count when the session terminates or errors.
+struct SignalConnectionGuard;
+
+impl SignalConnectionGuard {
+    fn new() -> Self {
+        ACTIVE_SIGNAL_CONNECTIONS.fetch_add(1, Ordering::Relaxed);
+        Self
+    }
+}
+
+impl Drop for SignalConnectionGuard {
+    fn drop(&mut self) {
+        ACTIVE_SIGNAL_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
 
 pub fn record_log(msg: String) {
     if let Ok(mut lock) = DEBUG_LOGS.lock() {
@@ -255,6 +281,9 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
     // Forward the initial buffered ClientHello record to upstream
     upstream.write_all(&buffer).await?;
 
+    // Track active Signal application session with RAII guard
+    let _guard = SignalConnectionGuard::new();
+
     // Bidirectional full-duplex streaming until either side disconnects
     match tokio::io::copy_bidirectional(&mut client, &mut upstream).await {
         Ok((client_to_upstream, upstream_to_client)) => {
@@ -276,6 +305,25 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
 
 /// Handles standard HTTP requests from web browsers by responding with the Web UI.
 async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAddr) -> std::io::Result<()> {
+    if buffer.starts_with(b"GET /stats") || buffer.starts_with(b"GET /api/stats") {
+        let active = get_active_connections();
+        let body = format!(r#"{{"active_connections":{}}}"#, active);
+        let resp = format!(
+            "HTTP/1.1 200 OK\r\n\
+             Content-Type: application/json; charset=utf-8\r\n\
+             Content-Length: {}\r\n\
+             Connection: close\r\n\
+             Cache-Control: no-cache, no-store, must-revalidate\r\n\
+             \r\n\
+             {}",
+            body.len(),
+            body
+        );
+        client.write_all(resp.as_bytes()).await?;
+        client.flush().await?;
+        return Ok(());
+    }
+
     if buffer.starts_with(b"GET /debug_logs") || buffer.starts_with(b"GET /logs") {
         let logs = get_logs();
         let resp = format!(
@@ -307,8 +355,9 @@ async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAdd
             .unwrap_or_else(|| "localhost".to_string())
     });
 
-    debug!("[{}] Serving Web UI dashboard for host: {}", peer_addr, host);
-    let resp = crate::web::build_http_response(&host);
+    let active = get_active_connections();
+    debug!("[{}] Serving Web UI dashboard for host: {} (active: {})", peer_addr, host, active);
+    let resp = crate::web::build_http_response(&host, active);
     client.write_all(&resp).await?;
     client.flush().await?;
     Ok(())

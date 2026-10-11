@@ -52,3 +52,22 @@ function copyProxyUrl() {
     setLanguage('en');
   }
 })();
+
+function pollStats() {
+  fetch('/stats')
+    .then(res => {
+      if (res.ok) return res.json();
+      throw new Error('Network error fetching stats');
+    })
+    .then(data => {
+      if (data && typeof data.active_connections === 'number') {
+        const countEl = document.getElementById('activeCount');
+        if (countEl) {
+          countEl.textContent = data.active_connections;
+        }
+      }
+    })
+    .catch(() => {});
+}
+
+setInterval(pollStats, 5000);

@@ -49,8 +49,13 @@
             在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。
           </span>
         </div>
-        <div>
+        <div class="meta-row">
           <span class="mono-meta">{{HOST}}:443</span>
+          <span class="status-indicator">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="activeLabel" data-en="Active Sessions:" data-zh="活跃会话：">活跃会话：</span>
+            <strong id="activeCount">{{ACTIVE_CONNECTIONS}}</strong>
+          </span>
         </div>
       </div>
     </div>

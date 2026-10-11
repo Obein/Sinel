@@ -67,13 +67,14 @@ pub fn escape_html(input: &str) -> String {
     escaped
 }
 
-/// Renders a dynamic HTML page displaying the Signal proxy share link.
-pub fn render_html_page(host: &str) -> String {
+/// Renders a dynamic HTML page displaying the Signal proxy share link and active session count.
+pub fn render_html_page(host: &str, active_connections: usize) -> String {
     let safe_host = escape_html(host);
     let share_url = format!("https://signal.tube/#{}", safe_host);
     get_assembled_template()
         .replace("{{HOST}}", &safe_host)
         .replace("{{SHARE_URL}}", &share_url)
+        .replace("{{ACTIVE_CONNECTIONS}}", &active_connections.to_string())
 }
 
 /// Parses headers from raw HTTP request bytes.
@@ -98,15 +99,15 @@ pub fn parse_http_host(buf: &[u8]) -> Option<String> {
 }
 
 /// Constructs a complete HTTP 200 OK response with the rendered HTML.
-pub fn build_http_response(host: &str) -> Vec<u8> {
-    let html = render_html_page(host);
+pub fn build_http_response(host: &str, active_connections: usize) -> Vec<u8> {
+    let html = render_html_page(host, active_connections);
     let response = format!(
         "HTTP/1.1 200 OK\r\n\
          Content-Type: text/html; charset=utf-8\r\n\
          Content-Length: {}\r\n\
          Connection: close\r\n\
          Cache-Control: no-cache, no-store, must-revalidate\r\n\
-         Content-Security-Policy: default-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-ancestors 'none';\r\n\
+         Content-Security-Policy: default-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';\r\n\
          X-Content-Type-Options: nosniff\r\n\
          X-Frame-Options: DENY\r\n\
          Referrer-Policy: no-referrer\r\n\
@@ -174,14 +175,15 @@ mod tests {
 
     #[test]
     fn test_render_html_contains_host() {
-        let html = render_html_page("signal.example.com");
+        let html = render_html_page("signal.example.com", 5);
         assert!(html.contains("https://signal.tube/#signal.example.com"));
         assert!(html.contains("signal.example.com:443"));
+        assert!(html.contains("5"));
     }
 
     #[test]
     fn test_modular_web_assembly() {
-        let html = render_html_page("signal.example.com");
+        let html = render_html_page("signal.example.com", 0);
         // Verify inlined CSS and JS
         assert!(html.contains("<style>"));
         assert!(html.contains("--accent: #2c6bed;"));
