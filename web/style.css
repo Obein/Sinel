@@ -38,6 +38,25 @@ header {
   align-items: center;
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.github-link:hover {
+  color: var(--text);
+}
+
 .lang-switch {
   display: inline-flex;
   align-items: center;
@@ -248,4 +267,14 @@ footer {
   justify-content: space-between;
   align-items: center;
   padding-top: 24px;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--text);
 }

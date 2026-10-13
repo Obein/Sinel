@@ -179,6 +179,7 @@ mod tests {
         assert!(html.contains("https://signal.tube/#signal.example.com"));
         assert!(html.contains("signal.example.com:443"));
         assert!(html.contains("5"));
+        assert!(html.contains("https://github.com/Obein/Sinel"));
     }
 
     #[test]
