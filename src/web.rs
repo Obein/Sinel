@@ -176,6 +176,7 @@ mod tests {
     #[test]
     fn test_render_html_contains_host() {
         let html = render_html_page("signal.example.com", 5);
+        assert!(html.contains(r#"<html lang="en-US">"#));
         assert!(html.contains("https://signal.tube/#signal.example.com"));
         assert!(html.contains("signal.example.com:443"));
         assert!(html.contains("5"));

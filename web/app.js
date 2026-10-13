@@ -1,8 +1,8 @@
-let currentLang = 'zh';
+let currentLang = 'en';
 
 function setLanguage(lang) {
   currentLang = lang;
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en-US';
 
   document.querySelectorAll('[data-en]').forEach(el => {
     el.textContent = el.getAttribute('data-' + lang);
@@ -48,7 +48,9 @@ function copyProxyUrl() {
   } catch (e) {}
 
   const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-  if (!userLang.startsWith('zh')) {
+  if (userLang.startsWith('zh')) {
+    setLanguage('zh');
+  } else {
     setLanguage('en');
   }
 })();

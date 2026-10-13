@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,9 +16,9 @@
         </svg>
       </a>
       <nav class="lang-switch" aria-label="Language Switcher">
-        <button id="btn-en" type="button" onclick="setLanguage('en')">EN</button>
+        <button id="btn-en" type="button" class="active" onclick="setLanguage('en')">EN</button>
         <span class="divider">/</span>
-        <button id="btn-zh" type="button" class="active" onclick="setLanguage('zh')">中文</button>
+        <button id="btn-zh" type="button" onclick="setLanguage('zh')">中文</button>
       </nav>
     </div>
   </header>
@@ -29,7 +29,7 @@
       <p class="subtitle" id="subtitle"
          data-en="End-to-end encrypted relay for Signal censorship circumvention."
          data-zh="端到端加密的 Signal 抗审查专属代理通道。">
-        端到端加密的 Signal 抗审查专属代理通道。
+        End-to-end encrypted relay for Signal censorship circumvention.
       </p>
     </div>
 
@@ -37,30 +37,30 @@
       <div class="input-wrap">
         <input type="text" id="shareUrl" value="{{SHARE_URL}}" readonly spellcheck="false">
         <button class="btn-copy" id="copyBtn" type="button" onclick="copyProxyUrl()">
-          <span id="copyBtnText" data-en="Copy" data-zh="复制">复制</span>
+          <span id="copyBtnText" data-en="Copy" data-zh="复制">Copy</span>
         </button>
       </div>
 
       <a href="{{SHARE_URL}}" class="btn-primary" id="openBtn" target="_blank" rel="noopener noreferrer"
          data-en="Connect to Signal"
          data-zh="一键连接 Signal">
-        一键连接 Signal
+        Connect to Signal
       </a>
 
       <div class="info">
         <div>
-          <span class="info-label" id="guideLabel" data-en="Signal Setup:" data-zh="Signal 配置：">Signal 配置：</span>
+          <span class="info-label" id="guideLabel" data-en="Signal Setup:" data-zh="Signal 配置：">Signal Setup:</span>
           <span id="guideText"
                 data-en="In Signal App, go to Settings &gt; Data and storage &gt; Use proxy."
                 data-zh="在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。">
-            在 Signal 中打开 设置 &gt; 数据与存储 &gt; 使用代理。
+            In Signal App, go to Settings &gt; Data and storage &gt; Use proxy.
           </span>
         </div>
         <div class="meta-row">
           <span class="mono-meta">{{HOST}}:443</span>
           <span class="status-indicator">
             <span class="status-dot" aria-hidden="true"></span>
-            <span id="activeLabel" data-en="Active Sessions:" data-zh="活跃会话：">活跃会话：</span>
+            <span id="activeLabel" data-en="Active Sessions:" data-zh="活跃会话：">Active Sessions:</span>
             <strong id="activeCount">{{ACTIVE_CONNECTIONS}}</strong>
           </span>
         </div>
@@ -69,7 +69,7 @@
   </main>
 
   <footer>
-    <a href="https://github.com/Obein/Sinel" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+    <a href="https://github.com/Obein/Sinel" target="_blank" rel="noopener noreferrer" class="footer-link">github.com/Obein/Sinel</a>
     <span>{{HOST}}</span>
   </footer>
 
