@@ -23,7 +23,7 @@ This proxy accurately reproduces the core obfuscation mechanism of the official 
            │  2. Receives decrypted raw TCP stream
            │  3. Zero-copy multi-protocol inspection:
            │     ├─ If Signal TLS (0x16): Sniffs inner SNI (e.g. chat.signal.org) & validates against whitelist
-           │     └─ If HTTP (GET /): Intercepts and serves minimalist Swiss Design Web UI
+           │     └─ If HTTP (GET /): Intercepts and serves minimalist Web UI
            ▼
   ┌───────────────┬────────────────────────────┐
   │ (Signal TLS)  │ (HTTP Web Access)          │
@@ -34,7 +34,7 @@ This proxy accurately reproduces the core obfuscation mechanism of the official 
 
 ### Key Features
 - **Pure Rust Asynchronous Engine**: Built on Tokio with a zero-copy TLS ClientHello SNI parser for high-performance, full-duplex TCP streaming.
-- **Built-in Swiss Design Web UI**: When accessed via a standard web browser, it renders a modern Swiss-style landing page with English/Chinese toggle, dynamic hostname detection for `https://signal.tube/#<your_host>`, one-click link copying, and deep-link button to open the Signal app.
+- **Built-in Web UI**: When accessed via a standard web browser, it renders a modern Swiss-style landing page with English/Chinese toggle, dynamic hostname detection for `https://signal.tube/#<your_host>`, one-click link copying, and deep-link button to open the Signal app.
 - **Zero Certificate Maintenance**: Fully automated edge certificates via Fly.io. No need to run `certbot`, cron jobs, or mount persistent volumes.
 - **Zero-Knowledge Privacy**: End-to-end encryption takes place directly between the user's device and official Signal servers. The proxy cannot inspect or tamper with any decrypted communication.
 - **Anti-Abuse Whitelist**: Enforces a strict domain whitelist covering official Signal services (`chat.signal.org`, `storage.signal.org`, `sfu.voip.signal.org`, etc.), preventing port scanners from using your instance as an open relay.
@@ -127,7 +127,7 @@ https://signal.tube/#signal.yourdomain.com
 ```
 
 **Connection Methods**:
-1. **Web UI Direct Setup**: Visit `https://signal.yourdomain.com` in your browser. The built-in Swiss Design Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
+1. **Web UI Direct Setup**: Visit `https://signal.yourdomain.com` in your browser. The built-in Web UI allows you to copy the share link or click "Open in Signal" to configure the proxy automatically.
 2. **Manual Setup**: Open Signal App -> **Settings** -> **Data and Storage** -> **Use Proxy** -> Toggle **ON** and enter `signal.yourdomain.com:443`.
 
 ## Advanced: Developer CLI Guide

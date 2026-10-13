@@ -23,7 +23,7 @@
            │  2. 接收解密后的 TCP 裸流
            │  3. 零拷贝多协议嗅探分流：
            │     ├─ 若为 Signal TLS (0x16)：提取内层 SNI (如 chat.signal.org) 并通过白名单校验
-           │     └─ 若为普通 HTTP (GET /)：接管并返回极简瑞士风格 Web UI
+           │     └─ 若为普通 HTTP (GET /)：接管并返回极简 Web UI
            ▼
   ┌───────────────┬────────────────────────────┐
   │ (Signal TLS)  │ (HTTP Web 访问)            │
@@ -34,7 +34,7 @@
 
 ### 核心特性
 - **纯粹的 Rust 异步实现**：基于 Tokio 异步网络引擎与零拷贝 TLS SNI 解析器，极速全双工数据流转。
-- **内置瑞士风格 Web 引导页 (Swiss Design UI)**：浏览器直接访问域名时，自动呈现现代瑞士国际排版风格引导页，支持中英双语切换，动态提取当前主机名生成 `signal.tube/#<your_host>` 链接，支持一键复制与唤起 Signal 客户端。
+- **内置 Web 引导页**：浏览器直接访问域名时，自动呈现引导页，支持中英双语切换，动态提取当前主机名生成 `signal.tube/#<your_host>` 链接，支持一键复制与唤起 Signal 客户端。
 - **免除证书维护**：依托 Fly.io 边缘托管证书，无需在容器内跑 `certbot` 或挂载卷。
 - **零知识隐私安全**：端到端加密数据在手机与官方服务器之间直接握手，中继服务器无权且无法查看任何内容。
 - **防滥用白名单**：内置官方完整服务域（`chat.signal.org`、`storage.signal.org`、`sfu.voip.signal.org` 等），拒绝非 Signal 目标的转发，防止被扫网者作为公开跳板。
@@ -125,7 +125,7 @@ Fly.io 实行 **"月度账单低于 $5.00 USD 自动全额免单"** 的官方政
 https://signal.tube/#signal.yourdomain.com
 ```
 
-1. **网页直达 / 自动配置**：浏览器访问 `https://signal.yourdomain.com`，使用内置的 Swiss Design Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
+1. **网页直达 / 自动配置**：浏览器访问 `https://signal.yourdomain.com`，使用内置的 Web UI 一键复制链接或点击“在客户端中打开”自动唤醒 Signal App。
 2. **手动配置**：打开 Signal App -> **设置** -> **数据与存储** -> **使用代理** -> 开启开关并填入 `signal.yourdomain.com:443`。
 
 ## 进阶：终端开发者本地 CLI 操作指引
