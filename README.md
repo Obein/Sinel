@@ -23,13 +23,13 @@ This proxy accurately reproduces the core obfuscation mechanism of the official 
            │  2. Receives decrypted raw TCP stream
            │  3. Zero-copy multi-protocol inspection:
            │     ├─ If Signal TLS (0x16): Sniffs inner SNI (e.g. chat.signal.org) & validates against whitelist
-           │     └─ If HTTP (GET /): Intercepts and serves minimalist Web UI
+           │     └─ If HTTP: Camouflage routing (302 redirect / 404 / /state Dashboard)
            ▼
   ┌───────────────┬────────────────────────────┐
   │ (Signal TLS)  │ (HTTP Web Access)          │
   ▼               ▼                            ▼
-[ Signal Servers ]                             [ Browser Web UI ]
-(chat.signal.org:443)                         (HTTP 200 Dashboard)
+[ Signal Servers ]                             [ Camouflage / Dashboard ]
+(chat.signal.org:443)                         (302 Redirect / 404 / Web UI)
 ```
 
 ### Key Features
@@ -161,6 +161,9 @@ Customizable via the `[env]` block in `fly.toml` or the **Secrets** tab in the F
 | `RUST_LOG` | `sinel=info,warn` | Log level (`debug` enables detailed handshake logs) |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | Allows all `*.signal.org` and `*.voip.signal.org` subdomains |
 | `EXTRA_ALLOWED_DOMAINS` | *(empty)* | Comma-separated list of additional allowed destination domains |
+| `ROOT_STATUS_CODE` | *(empty)* | HTTP status code for root (`/`): `302` (redirect) or `404` (not found). If unset or `STATE_PATH` is `/`, root serves the dashboard |
+| `REDIRECT_URL` / `MASKED_URL` | `https://www.google.com` | Redirect destination when `ROOT_STATUS_CODE=302` |
+| `STATE_PATH` | `/state` | Path where the Web UI dashboard is served (e.g. `/state` or `/secret-path`). If set to `/`, serves at root |
 
 ---
 

@@ -23,13 +23,13 @@
            │  2. 接收解密后的 TCP 裸流
            │  3. 零拷贝多协议嗅探分流：
            │     ├─ 若为 Signal TLS (0x16)：提取内层 SNI (如 chat.signal.org) 并通过白名单校验
-           │     └─ 若为普通 HTTP (GET /)：接管并返回极简 Web UI
+           │     └─ 若为普通 HTTP：伪装路由分流 (302 跳转 / 404 / /state 仪表盘)
            ▼
   ┌───────────────┬────────────────────────────┐
   │ (Signal TLS)  │ (HTTP Web 访问)            │
   ▼               ▼                            ▼
-[ Signal 官方服务器 ]                          [ 浏览器 Web 界面 ]
-(chat.signal.org:443)                         (HTTP 200 引导页)
+[ Signal 官方服务器 ]                          [ 伪装响应 / 仪表盘 ]
+(chat.signal.org:443)                         (302 重定向 / 404 / Web 引导页)
 ```
 
 ### 核心特性
@@ -159,6 +159,9 @@ fly certs add signal.yourdomain.com
 | `RUST_LOG` | `sinel=info,warn` | 日志详细级别（可调为 `debug` 查看实时转发日志） |
 | `ALLOW_ALL_SIGNAL_SUBDOMAINS` | `true` | 是否允许所有 `*.signal.org` 和 `*.voip.signal.org` 子域，防止官方新增 CDN 节点时断联 |
 | `EXTRA_ALLOWED_DOMAINS` | 空 | 额外允许的目标域名（英文逗号分隔） |
+| `ROOT_STATUS_CODE` | 空 | 根目录 (`/`) 伪装响应状态码：支持 `302`（重定向）或 `404`（Not Found）。未配置或 `STATE_PATH` 为 `/` 时默认直接显示仪表盘 |
+| `REDIRECT_URL` / `MASKED_URL` | `https://www.google.com` | 当 `ROOT_STATUS_CODE` 为 `302` 时的跳转目标网址 |
+| `STATE_PATH` | `/state` | 代理仪表盘的访问路径（例如 `/state` 或 `/secret-path`）。若设为 `/` 则始终在根目录展示 |
 
 ---
 

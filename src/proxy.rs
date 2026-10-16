@@ -303,62 +303,65 @@ async fn handle_connection(mut client: TcpStream, peer_addr: SocketAddr) -> std:
     Ok(())
 }
 
-/// Handles standard HTTP requests from web browsers by responding with the Web UI.
+/// Handles standard HTTP requests from web browsers by dispatching according to camouflage rules.
 async fn handle_http(client: &mut TcpStream, buffer: &[u8], peer_addr: SocketAddr) -> std::io::Result<()> {
-    if buffer.starts_with(b"GET /stats") || buffer.starts_with(b"GET /api/stats") {
-        let active = get_active_connections();
-        let body = format!(r#"{{"active_connections":{}}}"#, active);
-        let resp = format!(
-            "HTTP/1.1 200 OK\r\n\
-             Content-Type: application/json; charset=utf-8\r\n\
-             Content-Length: {}\r\n\
-             Connection: close\r\n\
-             Cache-Control: no-cache, no-store, must-revalidate\r\n\
-             \r\n\
-             {}",
-            body.len(),
-            body
-        );
-        client.write_all(resp.as_bytes()).await?;
-        client.flush().await?;
-        return Ok(());
+    let path = crate::web::parse_http_path(buffer).unwrap_or_else(|| "/".to_string());
+    let config = crate::web::CamouflageConfig::from_env();
+    let route = crate::web::match_route(&path, &config);
+
+    match route {
+        crate::web::HttpRoute::Stats => {
+            let active = get_active_connections();
+            let resp = crate::web::build_stats_response(active);
+            client.write_all(&resp).await?;
+            client.flush().await?;
+        }
+        crate::web::HttpRoute::Logs => {
+            let logs = get_logs();
+            let resp = crate::web::build_logs_response(&logs);
+            client.write_all(&resp).await?;
+            client.flush().await?;
+        }
+        crate::web::HttpRoute::Dashboard => {
+            let host = crate::web::parse_http_host(buffer).unwrap_or_else(|| {
+                std::env::var("FLY_APP_NAME")
+                    .ok()
+                    .and_then(|n| {
+                        let candidate = format!("{}.fly.dev", n);
+                        if crate::web::is_valid_hostname(&candidate) {
+                            Some(candidate)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_else(|| "localhost".to_string())
+            });
+
+            let active = get_active_connections();
+            debug!(
+                "[{}] Serving Web UI dashboard for host: {} (active: {}) at path: {}",
+                peer_addr, host, active, path
+            );
+            let resp = crate::web::build_http_response(&host, active);
+            client.write_all(&resp).await?;
+            client.flush().await?;
+        }
+        crate::web::HttpRoute::Redirect(target_url) => {
+            debug!(
+                "[{}] Camouflage 302 redirect for path '{}' to: {}",
+                peer_addr, path, target_url
+            );
+            let resp = crate::web::build_redirect_response(&target_url);
+            client.write_all(&resp).await?;
+            client.flush().await?;
+        }
+        crate::web::HttpRoute::NotFound => {
+            debug!("[{}] Camouflage 404 Not Found for path: {}", peer_addr, path);
+            let resp = crate::web::build_not_found_response();
+            client.write_all(&resp).await?;
+            client.flush().await?;
+        }
     }
 
-    if buffer.starts_with(b"GET /debug_logs") || buffer.starts_with(b"GET /logs") {
-        let logs = get_logs();
-        let resp = format!(
-            "HTTP/1.1 200 OK\r\n\
-             Content-Type: text/plain; charset=utf-8\r\n\
-             Content-Length: {}\r\n\
-             Connection: close\r\n\
-             \r\n\
-             {}",
-            logs.len(),
-            logs
-        );
-        client.write_all(resp.as_bytes()).await?;
-        client.flush().await?;
-        return Ok(());
-    }
-
-    let host = crate::web::parse_http_host(buffer).unwrap_or_else(|| {
-        std::env::var("FLY_APP_NAME")
-            .ok()
-            .and_then(|n| {
-                let candidate = format!("{}.fly.dev", n);
-                if crate::web::is_valid_hostname(&candidate) {
-                    Some(candidate)
-                } else {
-                    None
-                }
-            })
-            .unwrap_or_else(|| "localhost".to_string())
-    });
-
-    let active = get_active_connections();
-    debug!("[{}] Serving Web UI dashboard for host: {} (active: {})", peer_addr, host, active);
-    let resp = crate::web::build_http_response(&host, active);
-    client.write_all(&resp).await?;
-    client.flush().await?;
     Ok(())
 }
